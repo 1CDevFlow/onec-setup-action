@@ -1,3 +1,8 @@
+#  VS code dir
+.vscode
+
+*.tar.gz
+
 # Dependency directory
 node_modules
 

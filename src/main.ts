@@ -1,26 +1,79 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import * as cache from '@actions/cache'
+import * as tc from '@actions/tool-cache'
+import { exec } from '@actions/exec'
 
-/**
- * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
- */
-export async function run(): Promise<void> {
+async function installOneGet(version: string, platform: string): Promise<void> {
+  const key = `oneget----${platform}----${version}`
+
+  const gstsrc = '/tmp/oneget'
+  const cacheKey = await cache.restoreCache([gstsrc], key)
+
+  if (!cacheKey) {
+    core.info(`oneget cache not found; creating a new one. (key: "${key}")`)
+
+    let extension
+    if (platform === 'Windows') {
+      extension = 'zip'
+    } else {
+      extension = 'tar.gz'
+    }
+
+    const onegetPath = await tc.downloadTool(
+      `https://github.com/v8platform/oneget/releases/download/${version}/oneget_${platform}_x86_64.${extension}`,
+      `oneget.${extension}`
+    )
+    core.info(`oneget was downloaded`)
+
+    let oneGetFolder
+    if (platform === 'Windows') {
+      oneGetFolder = await tc.extractZip(onegetPath, gstsrc)
+    } else {
+      oneGetFolder = await tc.extractTar(onegetPath, gstsrc)
+    }
+    core.info(`oneget was extracted`)
+    // await exec.exec(
+    //   `curl -L https://github.com/v8platform/oneget/releases/download/${version}/oneget_${platform}_x86_64.${extension} --output oneget.${extension}`
+    // )
+
+    await cache.saveCache([gstsrc], key)
+    core.addPath(oneGetFolder)
+
+    core.info(`New cache created for this key: "${key}"`)
+  } else {
+    core.info(`Found oneget cache; using it. (key: "${key}")`)
+  }
+}
+async function run(): Promise<void> {
+  const platformType = process.platform
+  const onegetVersion = 'v0.6.0'
+
   try {
-    const ms: string = core.getInput('milliseconds')
+    let platform = ''
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    switch (platformType) {
+      case 'win32': {
+        platform = 'Windows'
+        break
+      }
+      case 'darwin': {
+        platform = 'Darwin'
+        break
+      }
+      case 'linux': {
+        platform = 'Linux'
+        break
+      }
+      default: {
+        throw new Error('Not supported on this OS type')
+      }
+    }
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    await installOneGet(onegetVersion, platform)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
+
+  await exec('oneget')
 }
