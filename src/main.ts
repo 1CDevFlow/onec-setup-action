@@ -153,10 +153,7 @@ async function installPlatform(
       '--enable-components',
       'server',
       '--disable-components',
-      'client_full',
-      'client_thin',
-      'client_thin_fib',
-      'ws'
+      'client_full,client_thin,client_thin_fib,ws'
     ])
 
     try {
