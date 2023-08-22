@@ -37,7 +37,7 @@ abstract class OnecTool implements IOnecTools {
     let matchedKey: string | undefined
 
     try {
-      matchedKey = await cache.restoreCache(cachePath, primaryKey)
+      matchedKey = await cache.restoreCache(cachePath.slice(), primaryKey)
     } catch (err) {
       const message = (err as Error).message
       core.info(`[warning]${message}`)
