@@ -264,7 +264,7 @@ export async function run(): Promise<void> {
   const type = core.getInput('type')
   const edt_version = core.getInput('edt_version')
   const onec_version = core.getInput('onec_version')
-  const useCache = core.getInput('cache') && isCacheFeatureAvailable()
+  const useCache = core.getBooleanInput('cache') && isCacheFeatureAvailable()
   let installer: OnecTool
 
   if (type === 'edt') {
