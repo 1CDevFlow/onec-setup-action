@@ -68,7 +68,7 @@ abstract class OnecTool implements IOnecTools {
   }
   async saveCache(): Promise<void> {
     try {
-      await cache.saveCache(this.cache_, await this.computeKey())
+      await cache.saveCache(this.cache_.slice(), await this.computeKey())
     } catch (error) {
       if (error instanceof Error) core.info(error.message)
     }
