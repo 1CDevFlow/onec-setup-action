@@ -9,16 +9,26 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  type: # change this
     required: true
-    default: '1000'
-
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
-
+    description: 'type of installer'
+    default: ''
+  edt_version:
+    required: false
+    description: 'type of installer'
+    default: '2022.2.5'
+  onec_version:
+    required: false
+    description: 'type of installer'
+    default: '8.3.21.1890'
+  oneget_version:
+    required: false
+    description: 'type of installer'
+    default: 'v0.6.0'
+  cache:
+    required: false
+    description: 'use cache'
+    default: 'true'
 runs:
   using: node20
   main: dist/index.js
