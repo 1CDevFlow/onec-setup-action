@@ -21,14 +21,20 @@ abstract class OnecTool implements IOnecTools {
   abstract cache_: string[]
   abstract version: string
   abstract platform: string
-
+  abstract runFileName: string
   // constructor(version: string, platform: string) {
   // }
 
   abstract getCacheDirs(): string[]
   abstract install(): Promise<void>
 
-  protected async handleLoadedCache(): Promise<void> {}
+  protected async handleLoadedCache(): Promise<void> {
+    const globber = await glob.create(`${this.cache_[0]}**/${this.runFileName}`)
+    for await (const file of globber.globGenerator()) {
+      core.info(file)
+      //  core.addPath(file);
+    }
+  }
 
   async restoreCache(): Promise<string | undefined> {
     const primaryKey = await this.computeKey()
@@ -80,6 +86,7 @@ abstract class OnecTool implements IOnecTools {
 }
 
 class OnecPlatform extends OnecTool {
+  runFileName = 'ibcmd'
   CACHE_PRIMARY_KEY = 'onec'
   version: string
   cache_: string[]
@@ -139,7 +146,7 @@ class OnecPlatform extends OnecTool {
         return ['C:/Program Files/1cv8']
       }
       case 'darwin': {
-        return ['/opt/1cv8'] // /Applications/1cv8.localized/8.3.21.1644/ but inly .app
+        return ['/opt/1cv8'] // /Applications/1cv8.localized/8.3.21.1644/ but only .app
       }
       case 'linux': {
         return ['/opt/1cv8']
@@ -152,6 +159,7 @@ class OnecPlatform extends OnecTool {
 }
 
 class OneGet extends OnecTool {
+  runFileName = 'oneget'
   CACHE_PRIMARY_KEY = 'oneget'
   version: string
   cache_: string[]
@@ -197,6 +205,7 @@ class OneGet extends OnecTool {
   }
 }
 class EDT extends OnecTool {
+  runFileName = 'ring'
   CACHE_PRIMARY_KEY = 'edt'
   version: string
   cache_: string[]
@@ -262,7 +271,6 @@ class EDT extends OnecTool {
     }
   }
 }
-
 export async function run(): Promise<void> {
   const onegetVersion = 'v0.6.0'
   const type = core.getInput('type')
