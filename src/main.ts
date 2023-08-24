@@ -5,6 +5,7 @@ import {exec} from '@actions/exec'
 import * as glob from '@actions/glob'
 import * as io from '@actions/io'
 import {isCacheFeatureAvailable} from './utils'
+import path from 'path'
 
 interface IOnecTools {
   CACHE_KEY_PREFIX: string
@@ -34,8 +35,7 @@ abstract class OnecTool implements IOnecTools {
 
     const globber = await glob.create(pattern)
     for await (const file of globber.globGenerator()) {
-      core.info(file)
-      //  core.addPath(file);
+      core.addPath(path.dirname(file))
     }
   }
 
