@@ -29,7 +29,7 @@ abstract class OnecTool implements IOnecTools {
   abstract getCacheDirs(): string[]
   abstract install(): Promise<void>
 
-  protected async handleLoadedCache(): Promise<void> {
+  async updatePath(): Promise<void> {
     const pattern = `${this.cache_[0]}/**/${this.runFileName}`
     core.info(pattern)
 
@@ -37,6 +37,10 @@ abstract class OnecTool implements IOnecTools {
     for await (const file of globber.globGenerator()) {
       core.addPath(path.dirname(file))
     }
+  }
+
+  protected async handleLoadedCache(): Promise<void> {
+    await this.updatePath()
   }
 
   async restoreCache(): Promise<string | undefined> {
@@ -305,6 +309,7 @@ export async function run(): Promise<void> {
     await oneget.install()
 
     await installer.install()
+    await installer.updatePath()
 
     if (useCache) {
       await installer.saveCache()
