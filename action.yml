@@ -9,7 +9,7 @@ branding:
 
 # Define your inputs here.
 inputs:
-  type: # change this
+  type:
     required: true
     description: 'type of installer'
     default: ''
