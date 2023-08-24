@@ -37,7 +37,10 @@ abstract class OnecTool implements IOnecTools {
     let matchedKey: string | undefined
 
     try {
-      matchedKey = await cache.restoreCache(cachePath.slice(), primaryKey, [primaryKey])
+      core.info(`Trying to restore: ${cachePath.slice().toString()}`)
+      matchedKey = await cache.restoreCache(cachePath.slice(), primaryKey, [
+        primaryKey
+      ])
     } catch (err) {
       const message = (err as Error).message
       core.info(`[warning]${message}`)
@@ -68,6 +71,7 @@ abstract class OnecTool implements IOnecTools {
   }
   async saveCache(): Promise<void> {
     try {
+      core.info(`Trying to save: ${this.cache_.slice().toString()}`)
       await cache.saveCache(this.cache_.slice(), await this.computeKey())
     } catch (error) {
       if (error instanceof Error) core.info(error.message)
