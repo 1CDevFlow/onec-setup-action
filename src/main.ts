@@ -22,7 +22,7 @@ abstract class OnecTool implements IOnecTools {
   abstract cache_: string[]
   abstract version: string
   abstract platform: string
-  abstract runFileName: string
+  abstract runFileName: string[]
   // constructor(version: string, platform: string) {
   // }
 
@@ -30,12 +30,13 @@ abstract class OnecTool implements IOnecTools {
   abstract install(): Promise<void>
 
   async updatePath(): Promise<void> {
-    const pattern = `${this.cache_[0]}/**/${this.runFileName}`
-    core.info(pattern)
-
-    const globber = await glob.create(pattern)
-    for await (const file of globber.globGenerator()) {
-      core.addPath(path.dirname(file))
+    for (const element of this.runFileName) {
+      const pattern = `${this.cache_[0]}/**/${element}`
+      core.info(pattern)
+      const globber = await glob.create(pattern)
+      for await (const file of globber.globGenerator()) {
+        core.addPath(path.dirname(file))
+      }
     }
   }
 
@@ -94,7 +95,7 @@ abstract class OnecTool implements IOnecTools {
 }
 
 class OnecPlatform extends OnecTool {
-  runFileName = 'ibcmd'
+  runFileName = ['ibcmd', 'ibcmd.exe']
   CACHE_PRIMARY_KEY = 'onec'
   version: string
   cache_: string[]
@@ -167,7 +168,7 @@ class OnecPlatform extends OnecTool {
 }
 
 class OneGet extends OnecTool {
-  runFileName = 'oneget'
+  runFileName = ['oneget']
   CACHE_PRIMARY_KEY = 'oneget'
   version: string
   cache_: string[]
@@ -213,7 +214,7 @@ class OneGet extends OnecTool {
   }
 }
 class EDT extends OnecTool {
-  runFileName = 'ring'
+  runFileName = ['ring', 'ring.bat', '1cedtcli.bat', '1cedtcli.sh']
   CACHE_PRIMARY_KEY = 'edt'
   version: string
   cache_: string[]
