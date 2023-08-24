@@ -29,7 +29,10 @@ abstract class OnecTool implements IOnecTools {
   abstract install(): Promise<void>
 
   protected async handleLoadedCache(): Promise<void> {
-    const globber = await glob.create(`${this.cache_[0]}**/${this.runFileName}`)
+    const pattern = `${this.cache_[0]}/**/${this.runFileName}`
+    core.info(pattern)
+
+    const globber = await glob.create(pattern)
     for await (const file of globber.globGenerator()) {
       core.info(file)
       //  core.addPath(file);
@@ -57,6 +60,7 @@ abstract class OnecTool implements IOnecTools {
     await this.handleLoadedCache()
 
     await this.handleMatchResult(matchedKey, primaryKey)
+
     return matchedKey
   }
 
