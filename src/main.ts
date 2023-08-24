@@ -35,6 +35,7 @@ abstract class OnecTool implements IOnecTools {
       core.info(pattern)
       const globber = await glob.create(pattern)
       for await (const file of globber.globGenerator()) {
+        core.info(`add to PATH ${path.dirname(file)} (${file}) `)
         core.addPath(path.dirname(file))
       }
     }
