@@ -125,6 +125,8 @@ class OnecPlatform extends OnecTool {
       await exec('oneget', [
         'get',
         '--extract',
+        '--filter',
+        'platform=server64_8',
         `platform:${onegetPlatform}.full.x64@${this.version}`
       ])
     } catch (error) {
@@ -144,9 +146,9 @@ class OnecPlatform extends OnecTool {
       '--mode',
       'unattended',
       '--enable-components',
-      'server',
+      'server,client_full',
       '--disable-components',
-      'client_full,client_thin,client_thin_fib,ws'
+      'client_thin,client_thin_fib,ws'
     ])
   }
 
