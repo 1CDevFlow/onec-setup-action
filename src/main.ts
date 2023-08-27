@@ -4,7 +4,7 @@ import * as tc from '@actions/tool-cache'
 import {exec} from '@actions/exec'
 import * as glob from '@actions/glob'
 import * as io from '@actions/io'
-import {isCacheFeatureAvailable} from './utils'
+import {isCacheFeatureAvailable, restoreCasheByPrimaryKey} from './utils'
 import path from 'path'
 
 interface IOnecTools {
@@ -23,8 +23,6 @@ abstract class OnecTool implements IOnecTools {
   abstract version: string
   abstract platform: string
   abstract runFileName: string[]
-  // constructor(version: string, platform: string) {
-  // }
 
   abstract getCacheDirs(): string[]
   abstract install(): Promise<void>
@@ -46,31 +44,17 @@ abstract class OnecTool implements IOnecTools {
   }
 
   async restoreCache(): Promise<string | undefined> {
-    const primaryKey = await this.computeKey()
-    const cachePath = this.cache_
+    const primaryKey = this.computeKey()
 
-    let matchedKey: string | undefined
-
-    try {
-      core.info(`Trying to restore: ${cachePath.slice().toString()}`)
-      matchedKey = await cache.restoreCache(cachePath.slice(), primaryKey, [
-        primaryKey
-      ])
-    } catch (err) {
-      const message = (err as Error).message
-      core.info(`[warning]${message}`)
-      core.setOutput('cache-hit', false)
-      return
-    }
+    const matchedKey = await restoreCasheByPrimaryKey(this.cache_, primaryKey)
 
     await this.handleLoadedCache()
-
     await this.handleMatchResult(matchedKey, primaryKey)
 
     return matchedKey
   }
 
-  async computeKey(): Promise<string> {
+  computeKey(): string {
     return `${this.CACHE_KEY_PREFIX}--${this.CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`
   }
 
@@ -88,7 +72,7 @@ abstract class OnecTool implements IOnecTools {
   async saveCache(): Promise<void> {
     try {
       core.info(`Trying to save: ${this.cache_.slice().toString()}`)
-      await cache.saveCache(this.cache_.slice(), await this.computeKey())
+      await cache.saveCache(this.cache_.slice(), this.computeKey())
     } catch (error) {
       if (error instanceof Error) core.info(error.message)
     }
@@ -102,7 +86,6 @@ class OnecPlatform extends OnecTool {
   cache_: string[]
   platform: string
   constructor(version: string, platform: string) {
-    //super(version, platform)
     super()
     this.version = version
     this.platform = platform
@@ -139,7 +122,7 @@ class OnecPlatform extends OnecTool {
     const globber = await glob.create(patterns.join('\n'))
     const files = await globber.glob()
 
-    core.info(`finded ${files}`)
+    core.info(`found ${files}`)
 
     await exec('sudo', [
       files[0],
@@ -195,7 +178,7 @@ class OneGet extends OnecTool {
     await io.rmRF(archivePath)
 
     const onegetPath = await tc.downloadTool(
-      `https://github.com/v8platform/oneget/releases/download/${this.version}/oneget_${this.platform}_x86_64.${extension}`,
+      `https://github.com/v8platform/oneget/releases/download/v${this.version}/oneget_${this.platform}_x86_64.${extension}`,
       `${archivePath}`
     )
     core.info(`oneget was downloaded`)
@@ -289,14 +272,20 @@ export async function run(): Promise<void> {
   const edt_version = core.getInput('edt_version')
   const onec_version = core.getInput('onec_version')
   const useCache = core.getBooleanInput('cache') && isCacheFeatureAvailable()
+  const useCacheDistr =
+    core.getBooleanInput('cache_distr') && isCacheFeatureAvailable()
   let installer: OnecTool
+
+  if (useCache && useCacheDistr) {
+    throw new Error('only one cache type allowed')
+  }
 
   if (type === 'edt') {
     installer = new EDT(edt_version, process.platform)
   } else if (type === 'onec') {
     installer = new OnecPlatform(onec_version, process.platform)
   } else {
-    throw new Error('not recognized installer type')
+    throw new Error('failed to recognize the installer type')
   }
 
   let restoredKey: string | undefined

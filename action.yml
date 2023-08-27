@@ -11,24 +11,28 @@ branding:
 inputs:
   type:
     required: true
-    description: 'type of installer'
+    description: 'type of installer(edt or onec)'
     default: ''
   edt_version:
     required: false
-    description: 'type of installer'
-    default: '2022.2.5'
+    description: 'edt version'
+    default: '2023.1.2'
   onec_version:
     required: false
-    description: 'type of installer'
+    description: 'onec version'
     default: '8.3.20.1549'
   oneget_version:
     required: false
-    description: 'type of installer'
-    default: 'v0.6.0'
+    description: 'oneget version'
+    default: '0.6.0'
   cache:
     required: false
     description: 'use cache'
     default: 'true'
+  cache_distr:
+    required: false
+    description: 'use cache distributives'
+    default: 'false'
 runs:
   using: node20
   main: dist/index.js

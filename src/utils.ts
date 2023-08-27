@@ -30,3 +30,20 @@ export function isCacheFeatureAvailable(): boolean {
   )
   return false
 }
+
+export async function restoreCasheByPrimaryKey(
+  paths: string[],
+  key: string
+): Promise<string | undefined> {
+  let matchedKey
+  try {
+    core.info(`Trying to restore: ${paths.slice().toString()}`)
+    matchedKey = await cache.restoreCache(paths.slice(), key, [key])
+  } catch (err) {
+    const message = (err as Error).message
+    core.info(`[warning]${message}`)
+    core.setOutput('cache-hit', false)
+    return
+  }
+  return matchedKey
+}
