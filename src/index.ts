@@ -86,31 +86,30 @@ abstract class OnecTool implements IOnecTools {
   }
 
   protected isWindows(): boolean {
-    return PLATFORM_WIN === this.platform;
+    return PLATFORM_WIN === this.platform
   }
 
   protected isMac(): boolean {
-    return PLATFORM_MAC === this.platform;
+    return PLATFORM_MAC === this.platform
   }
 
   protected isLinux(): boolean {
-    return PLATFORM_LIN === this.platform;
+    return PLATFORM_LIN === this.platform
   }
 
   protected getOnegetPlatform(): String {
-
     switch (this.platform) {
       case PLATFORM_WIN: {
-        return 'win';
+        return 'win'
       }
       case PLATFORM_MAC: {
-        return 'mac';
+        return 'mac'
       }
       case PLATFORM_LIN: {
-        return 'linux';
+        return 'linux'
       }
       default: {
-        core.setFailed("Unrecognized os " + this.platform)
+        core.setFailed('Unrecognized os ' + this.platform)
         return ''
       }
     }
@@ -135,18 +134,18 @@ class OnecPlatform extends OnecTool {
 
   async install(): Promise<void> {
     const installerPattern = 'setup-full'
-    const onegetPlatform = this.getOnegetPlatform();
-    
-    let filter;
-    
-    core.debug(`isWindows: ${this.isWindows()}`);
-    core.debug(`isLinux: ${this.isLinux()}`);
-    core.debug(`isMac: ${this.isMac()}`);
+    const onegetPlatform = this.getOnegetPlatform()
 
-    if(this.isWindows()) {
-      filter = 'windows64full';
-    } else if(this.isLinux()) {
-      filter = 'server64_8';
+    let filter
+
+    core.debug(`isWindows: ${this.isWindows()}`)
+    core.debug(`isLinux: ${this.isLinux()}`)
+    core.debug(`isMac: ${this.isMac()}`)
+
+    if (this.isWindows()) {
+      filter = 'windows64full'
+    } else if (this.isLinux()) {
+      filter = 'server64_8'
     }
 
     try {
@@ -154,7 +153,7 @@ class OnecPlatform extends OnecTool {
         'get',
         '--extract',
         '--filter',
-        'platform=${filter}',
+        `platform=${filter}`,
         `platform:${onegetPlatform}.full.x64@${this.version}`
       ])
     } catch (error) {
@@ -177,13 +176,13 @@ class OnecPlatform extends OnecTool {
       '--disable-components',
       'client_thin,client_thin_fib,ws'
     ]
-    
-    if(this.isLinux()) {
+
+    if (this.isLinux()) {
       await exec('sudo', [files[0], ...install_arg])
-    } else if(this.isWindows()){
+    } else if (this.isWindows()) {
       await exec(files[0], install_arg)
     } else {
-      core.setFailed("Unrecognized os " + this.platform)
+      core.setFailed('Unrecognized os ' + this.platform)
     }
   }
 
@@ -283,7 +282,7 @@ class EDT extends OnecTool {
       installerPattern = '1ce-installer-cli'
     }
 
-    const onegetPlatform = this.getOnegetPlatform();
+    const onegetPlatform = this.getOnegetPlatform()
 
     try {
       await exec('oneget', [
@@ -315,12 +314,12 @@ class EDT extends OnecTool {
       '--ignore-signature-warnings'
     ]
 
-    if(this.isLinux()) {
+    if (this.isLinux()) {
       await exec('sudo', [files[0], ...install_arg])
-    } else if(this.isWindows()){
+    } else if (this.isWindows()) {
       await exec(files[0], install_arg)
     } else {
-      core.setFailed("Unrecognized os " + this.platform)
+      core.setFailed('Unrecognized os ' + this.platform)
     }
   }
   getCacheDirs(): string[] {
