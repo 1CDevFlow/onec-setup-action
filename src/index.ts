@@ -133,7 +133,7 @@ class OnecPlatform extends OnecTool {
   }
 
   async install(): Promise<void> {
-    const installerPattern = 'setup-full'
+    const installerPattern = this.isWindows() ? 'setup.exe' : 'setup-full'
     const onegetPlatform = this.getOnegetPlatform()
 
     let filter
@@ -143,7 +143,7 @@ class OnecPlatform extends OnecTool {
     core.debug(`isMac: ${this.isMac()}`)
 
     if (this.isWindows()) {
-      filter = 'windows64full'
+      filter = 'windows64full_8'
     } else if (this.isLinux()) {
       filter = 'server64_8'
     }
@@ -178,9 +178,27 @@ class OnecPlatform extends OnecTool {
     ]
 
     if (this.isLinux()) {
-      await exec('sudo', [files[0], ...install_arg])
+      await exec('sudo', [
+        files[0],
+        '--mode',
+        'unattended',
+        '--enable-components',
+        'server,client_full',
+        '--disable-components',
+        'client_thin,client_thin_fib,ws'
+      ])
     } else if (this.isWindows()) {
-      await exec(files[0], install_arg)
+      await exec(files[0], [
+        '/l',
+        'ru',
+        '/S',
+        'server=1',
+        'thinclient=1',
+        '/quiet',
+        '/qn',
+        'INSTALLSRVRASSRVC=0',
+        '/norestart'
+      ])
     } else {
       core.setFailed('Unrecognized os ' + this.platform)
     }
