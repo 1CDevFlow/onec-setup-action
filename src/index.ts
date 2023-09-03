@@ -18,20 +18,16 @@ interface IOnecTools {
   version: string
   platform: string
   getCacheDirs(): string[]
-  installerPath: string
-  instalationPath: string
 }
 
 abstract class OnecTool implements IOnecTools {
-  CACHE_KEY_PREFIX = 'setup-onec'
+  CACHE_KEY_PREFIX = 'setup'
+  INSTALLER_CACHE_PRIMARY_KEY = 'installer'
   abstract INSTALLED_CACHE_PRIMARY_KEY: string
-  abstract INSTALLER_CACHE_PRIMARY_KEY: string
   abstract cache_: string[]
   abstract version: string
   abstract platform: string
   abstract runFileName: string[]
-  abstract installerPath: string
-  abstract instalationPath: string
   abstract getCacheDirs(): string[]
   abstract install(): Promise<void>
   abstract download(): Promise<void>
@@ -147,13 +143,9 @@ abstract class OnecTool implements IOnecTools {
 class OnecPlatform extends OnecTool {
   runFileName = ['ibcmd', 'ibcmd.exe']
   INSTALLED_CACHE_PRIMARY_KEY = 'onec'
-  INSTALLER_CACHE_PRIMARY_KEY = 'onec-installer'
   version: string
   cache_: string[]
   platform: string
-  installerPath = ''
-  instalationPath = ''
-
   constructor(version: string, platform: string) {
     super()
     this.version = version
@@ -251,12 +243,9 @@ class OnecPlatform extends OnecTool {
 class OneGet extends OnecTool {
   runFileName = ['oneget']
   INSTALLED_CACHE_PRIMARY_KEY = 'oneget'
-  INSTALLER_CACHE_PRIMARY_KEY = 'oneget-installer'
   version: string
   cache_: string[]
   platform: string
-  installerPath = ''
-  instalationPath = ''
   constructor(version: string, platform: string) {
     super()
     this.version = version
@@ -320,12 +309,9 @@ class OneGet extends OnecTool {
 class EDT extends OnecTool {
   runFileName = ['ring', 'ring.bat', '1cedtcli.bat', '1cedtcli.sh']
   INSTALLED_CACHE_PRIMARY_KEY = 'edt'
-  INSTALLER_CACHE_PRIMARY_KEY = 'edt-installer'
   version: string
   cache_: string[]
   platform: string
-  installerPath = ''
-  instalationPath = ''
   constructor(version: string, platform: string) {
     super()
     this.version = version
