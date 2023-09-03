@@ -268,7 +268,7 @@ class OneGet extends OnecTool {
     const installerPath = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
     await io.rmRF(installerPath)
 
-    const archivePath = `${installerPath}$/oneget.${extension}`
+    const archivePath = `${installerPath}/oneget.${extension}`
 
     await tc.downloadTool(
       `https://github.com/v8platform/oneget/releases/download/v${this.version}/oneget_${platform}_x86_64.${extension}`,
