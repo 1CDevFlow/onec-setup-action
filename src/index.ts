@@ -93,7 +93,18 @@ abstract class OnecTool implements IOnecTools {
     }
     core.setOutput('cache-hit', matchedKey === primaryKey)
   }
-  async saveCache(): Promise<void> {
+  async saveInstallerCache(): Promise<void> {
+    try {
+      await cache.saveCache(
+        [`/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`],
+        this.computeInstallerKey()
+      )
+    } catch (error) {
+      if (error instanceof Error) core.info(error.message)
+    }
+  }
+
+  async saveInstalledCache(): Promise<void> {
     try {
       core.info(`Trying to save: ${this.cache_.slice().toString()}`)
       await cache.saveCache(this.cache_.slice(), this.computeInstalledKey())
@@ -416,6 +427,18 @@ export async function run(): Promise<void> {
 
   let installerRestoredKey: string | undefined
   let installerRestored = false
+  let instalationRestoredKey: string | undefined
+  let instalationRestored = false
+
+  if (useCache) {
+    instalationRestoredKey = await installer.restoreInstalledTool()
+    instalationRestored = instalationRestoredKey !== undefined
+  }
+
+  if (instalationRestored) {
+    return
+  }
+
   if (useCacheDistr) {
     installerRestoredKey = await installer.restoreInstallationPackage()
     installerRestored = installerRestoredKey !== undefined
@@ -426,23 +449,16 @@ export async function run(): Promise<void> {
     await oneget.download()
     await oneget.install()
     await installer.download()
+    if (useCacheDistr) {
+      await installer.saveInstallerCache()
+    }
   }
 
-  let instalationRestoredKey: string | undefined
-  let instalationRestored = false
+  await installer.install()
+  await installer.updatePath()
 
   if (useCache) {
-    instalationRestoredKey = await installer.restoreInstalledTool()
-    instalationRestored = instalationRestoredKey !== undefined
-  }
-
-  if (!instalationRestored) {
-    await installer.install()
-    await installer.updatePath()
-
-    if (useCache) {
-      await installer.saveCache()
-    }
+    await installer.saveInstalledCache()
   }
 }
 
