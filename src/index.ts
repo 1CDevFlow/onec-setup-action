@@ -421,7 +421,7 @@ export async function run(): Promise<void> {
     installerRestored = installerRestoredKey !== undefined
   }
 
-  if (installerRestored) {
+  if (!installerRestored) {
     const oneget = new OneGet(onegetVersion, process.platform)
     await oneget.download()
     await oneget.install()
