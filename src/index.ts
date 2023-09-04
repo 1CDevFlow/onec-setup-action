@@ -27,18 +27,19 @@ abstract class OnecTool implements IOnecTools {
   abstract cache_: string[]
   abstract version: string
   abstract platform: string
-  abstract runFileName: string[]
+  abstract getRunFileNames(): string[]
   abstract getCacheDirs(): string[]
   abstract install(): Promise<void>
   abstract download(): Promise<void>
   async updatePath(): Promise<void> {
-    for (const element of this.runFileName) {
+    for (const element of this.getRunFileNames()) {
       const pattern = `${this.cache_[0]}/**/${element}`
       core.info(pattern)
       const globber = await glob.create(pattern)
       for await (const file of globber.globGenerator()) {
         core.info(`add to PATH ${path.dirname(file)} (${file}) `)
         core.addPath(path.dirname(file))
+        break
       }
     }
   }
@@ -141,7 +142,6 @@ abstract class OnecTool implements IOnecTools {
 }
 
 class OnecPlatform extends OnecTool {
-  runFileName = ['ibcmd', 'ibcmd.exe']
   INSTALLED_CACHE_PRIMARY_KEY = 'onec'
   version: string
   cache_: string[]
@@ -241,10 +241,17 @@ class OnecPlatform extends OnecTool {
       }
     }
   }
+
+  getRunFileNames(): string[] {
+    if (this.isWindows()) {
+      return ['ibcmd.exe']
+    } else {
+      return ['ibcmd']
+    }
+  }
 }
 
 class OneGet extends OnecTool {
-  runFileName = ['oneget']
   INSTALLED_CACHE_PRIMARY_KEY = 'oneget'
   version: string
   cache_: string[]
@@ -308,9 +315,13 @@ class OneGet extends OnecTool {
   getCacheDirs(): string[] {
     return ['/tmp/oneget']
   }
+
+  getRunFileNames(): string[] {
+    return ['oneget']
+  }
 }
+
 class EDT extends OnecTool {
-  runFileName = ['ring', 'ring.bat', '1cedtcli.bat', '1cedtcli.sh']
   INSTALLED_CACHE_PRIMARY_KEY = 'edt'
   version: string
   cache_: string[]
@@ -377,6 +388,7 @@ class EDT extends OnecTool {
       core.setFailed(`Unrecognized os${this.platform}`)
     }
   }
+
   getCacheDirs(): string[] {
     switch (this.platform) {
       case PLATFORM_WIN: {
@@ -391,6 +403,14 @@ class EDT extends OnecTool {
       default: {
         throw new Error('Not supported on this OS type')
       }
+    }
+  }
+
+  getRunFileNames(): string[] {
+    if (this.isWindows()) {
+      return ['ring.bat', '1cedtcli.bat']
+    } else {
+      return ['ring', '1cedtcli.sh']
     }
   }
 }
