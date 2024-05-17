@@ -76,10 +76,12 @@ export class Client {
     }
 
     const fullFileName = path.resolve(output, fileName)
-    if (fs.statSync(fullFileName).isFile()) {
-      core.info(`${fileName} already exist`)
-      return fullFileName
-    }
+    try {
+      if (fs.statSync(fullFileName).isFile()) {
+        core.info(`${fileName} already exist`)
+        return fullFileName
+      }
+    } catch {}
 
     core.info(`Downloading ${fileName}...`)
 
