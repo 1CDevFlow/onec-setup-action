@@ -1,3 +1,3 @@
-import run from './installer'
+import * as installer from './installer'
 
-run()
+installer.run()

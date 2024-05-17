@@ -1,4 +1,10 @@
-import { ReleaseFile, OSName, ArchitectureName, DistributiveType } from "./model";
+import {
+  ReleaseFile,
+  OSName,
+  ArchitectureName,
+  DistributiveType,
+  ArtifactFilter
+} from './model'
 
 const x64Pattern = /.*(\(64\-bit\)|\(64 бит\)).*/
 const rpmPattern = /.+RPM.+(ОС Linux|для Linux$|Linux-систем$).*/
@@ -10,59 +16,68 @@ const clientPattern = /^Клиент.+/
 const serverPattern = /^[Cервер|Сервер].+/
 const thinPattern = /^Тонкий клиент.+/
 const fullPattern = /^Технологическая платформа.+/
+const offlinePattern = /.+без интернета.*/
 
 type Predicate = (value: string) => unknown
 
-export function getFilters(osName: OSName, architecture: ArchitectureName, type: DistributiveType): Predicate[] {
-    let filters = new Array<Predicate>
-    switch (osName) {
-        case "win":
-            filters.push(windowsPattern.test.bind(windowsPattern))
-            break;
-        case "mac":
-            filters.push(osxPattern.test.bind(osxPattern))
-            break;
-        case "linux":
-            filters.push(linuxPattern.test.bind(linuxPattern))
-            break;
-        case "deb":
-            filters.push(debPattern.test.bind(debPattern))
-            break;
-        case "rpm":
-            filters.push(rpmPattern.test.bind(rpmPattern))
-            break;
-    }
+export function getFilters(artifactFilter: ArtifactFilter): Predicate[] {
+  let filters = new Array<Predicate>()
+  switch (artifactFilter.osName) {
+    case 'win':
+      filters.push(windowsPattern.test.bind(windowsPattern))
+      break
+    case 'mac':
+      filters.push(osxPattern.test.bind(osxPattern))
+      break
+    case 'linux':
+      filters.push(linuxPattern.test.bind(linuxPattern))
+      break
+    case 'deb':
+      filters.push(debPattern.test.bind(debPattern))
+      break
+    case 'rpm':
+      filters.push(rpmPattern.test.bind(rpmPattern))
+      break
+  }
 
-    switch (architecture) {
-        case "x86":
-            filters.push(v => !x64Pattern.test(v))
-            break;
-        case "x64":
-            filters.push(x64Pattern.test.bind(x64Pattern))
-            break;
-    }
-    switch (type) {
-        case "full":
-            filters.push(fullPattern.test.bind(fullPattern))
-            break;
-        case "server":
-            filters.push(serverPattern.test.bind(serverPattern))
-            break;
-        case "client":
-            filters.push(clientPattern.test.bind(clientPattern))
-            break;
-        case "thinClient":
-            filters.push(thinPattern.test.bind(thinPattern))
-            break;
-    }
+  switch (artifactFilter.architecture) {
+    case 'x86':
+      filters.push(v => !x64Pattern.test(v))
+      break
+    case 'x64':
+      filters.push(x64Pattern.test.bind(x64Pattern))
+      break
+  }
+  switch (artifactFilter.type) {
+    case 'full':
+      filters.push(fullPattern.test.bind(fullPattern))
+      break
+    case 'server':
+      filters.push(serverPattern.test.bind(serverPattern))
+      break
+    case 'client':
+      filters.push(clientPattern.test.bind(clientPattern))
+      break
+    case 'thinClient':
+      filters.push(thinPattern.test.bind(thinPattern))
+      break
+  }
 
-    return filters
+  if (artifactFilter.offline === true) {
+    filters.push(offlinePattern.test.bind(offlinePattern))
+  } else {
+    filters.push(v => !offlinePattern.test(v))
+  }
+
+  return filters
 }
 
-export function filter(files: ReleaseFile[], filters: Predicate[]): ReleaseFile[] {
-    return files.filter(file => {
-        const f = filters.find(
-            filter => !filter(file.name))
-        return f === undefined
-    })
+export function filter(
+  files: ReleaseFile[],
+  filters: Predicate[]
+): ReleaseFile[] {
+  return files.filter(file => {
+    const f = filters.find(filter => !filter(file.name))
+    return f === undefined
+  })
 }
