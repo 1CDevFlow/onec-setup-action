@@ -1,4 +1,4 @@
-import { OnecTool } from './OnecTool'
+import { OnecTool } from './onecTool'
 import * as core from '@actions/core'
 import { exec } from '@actions/exec'
 import { downloadRelease } from '../onegetjs'

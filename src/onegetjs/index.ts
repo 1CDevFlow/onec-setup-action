@@ -1,9 +1,6 @@
 import {
   ReleaseFile,
   Version,
-  OSName,
-  ArchitectureName,
-  DistributiveType,
   ReleaseDescription,
   ArtifactFilter
 } from './model'
@@ -26,7 +23,7 @@ export default class OneGet {
     this.downloadTo = downloadTo
   }
 
-  async auth() {
+  async auth(): Promise<void> {
     await this.client.auth()
   }
   // https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.10.2580&path=Platform%255c8_3_10_2580%255cclient.deb64.tar.gz
@@ -35,22 +32,21 @@ export default class OneGet {
     version: Version,
     artifactFilter: ArtifactFilter
   ): Promise<string[]> {
-    let filters = filter.getFilters(artifactFilter)
-    let files = filter.filter(version.files, filters)
+    const filters = filter.getFilters(artifactFilter)
+    const files = filter.filter(version.files, filters)
 
-    if (files.length == 0) {
+    if (files.length === 0) {
       error(`Found't files for version ${JSON.stringify(artifactFilter)}`)
     }
 
-    core.debug('Files for downloading ' + JSON.stringify(files))
+    core.debug(`Files for downloading ${JSON.stringify(files)}`)
 
-    let downloadedFiles: string[] = []
-    for (let index = 0; index < files.length; index++) {
-      const file = files[index]
+    const downloadedFiles: string[] = []
 
+    for (const file of files) {
       core.info(`Downloading ${file.name}`)
 
-      core.debug('Get artifact download page: ' + file.name)
+      core.debug(`Get artifact download page: ${file.name}`)
       const links = parser.fileDownloadLinks(
         await this.client.getText(file.url)
       )
@@ -60,11 +56,8 @@ export default class OneGet {
         continue
       }
 
-      for (let l = 0; l < links.length; l++) {
-        const location = await this.client.downloadFile(
-          links[l],
-          this.downloadTo
-        )
+      for (const link of links) {
+        const location = await this.client.downloadFile(link, this.downloadTo)
         if (location !== undefined) {
           downloadedFiles.push(location)
           break
@@ -76,25 +69,25 @@ export default class OneGet {
   }
 
   async versionInfo(project: string, version: string): Promise<Version> {
-    core.debug('Get project page for: ' + project)
-    let page = await this.client.projectPage(project)
-    let versions = parser.versions(page)
-    let filteredVersions = versions.filter(v => v.name === version)
+    core.debug(`Get project page for: ${project}`)
+    const page = await this.client.projectPage(project)
+    const versions = parser.versions(page)
+    const filteredVersions = versions.filter(v => v.name === version)
 
     if (filteredVersions.length === 0) {
       error(`Version ${version} for ${project} not found`)
     }
 
-    let versionInfo = filteredVersions[0]
-    core.debug('Version info: ' + JSON.stringify(versionInfo))
+    const versionInfo = filteredVersions[0]
+    core.debug(`Version info: ${JSON.stringify(versionInfo)}`)
 
     versionInfo.files = await this.versionFiles(versionInfo)
-    core.debug('Version files: ' + JSON.stringify(versionInfo.files))
+    core.debug(`Version files: ${JSON.stringify(versionInfo.files)}`)
     return versionInfo
   }
 
   async versionFiles(version: Version): Promise<ReleaseFile[]> {
-    core.debug('Get project version page for: ' + version.name)
+    core.debug(`Get project version page for: ${version.name}`)
 
     const page = await this.client.getText(version.url)
     return parser.releaseFiles(page)
@@ -105,7 +98,7 @@ export async function downloadRelease(
   release: ReleaseDescription,
   destination: string,
   unpack = false
-) {
+): Promise<void> {
   const downloadDestination = unpack
     ? path.resolve('tmp', '__downloads__')
     : destination
@@ -123,7 +116,7 @@ export async function downloadRelease(
   }
 }
 
-function error(message: string) {
+function error(message: string): void {
   core.error(message)
   throw message
 }

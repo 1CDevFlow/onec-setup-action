@@ -1,5 +1,4 @@
-import { RequestInfo, RequestInit, Response } from 'node-fetch'
-import fetch from 'node-fetch'
+import fetch, { RequestInit, Response } from 'node-fetch'
 import { Cookie, CookieJar } from 'cookiejar'
 import * as core from '@actions/core'
 
@@ -12,10 +11,10 @@ export default async function request(
   init?: RequestInit2
 ): Promise<Response> {
   core.debug(`Request [${init?.method ?? 'GET'}] ${urlString}`)
-  let url = new URL(urlString)
+  const url = new URL(urlString)
 
-  let cookieJar = init?.cookie
-  let cookieValue = cookieJar
+  const cookieJar = init?.cookie
+  const cookieValue = cookieJar
     ?.getCookies({
       domain: url.host,
       path: url.pathname,
@@ -24,16 +23,16 @@ export default async function request(
     })
     .map(c => c.toValueString())
     .join('; ')
-  let fetchInit = init ?? {}
-  if (cookieValue) {
-    if (fetchInit.headers === undefined) {
-      fetchInit.headers = {
-        cookie: cookieValue
-      }
+
+  const fetchInit = init ?? {}
+  if (cookieValue && fetchInit.headers === undefined) {
+    fetchInit.headers = {
+      cookie: cookieValue
     }
   }
+
   fetchInit.redirect = 'manual'
-  let response = await fetch(urlString, fetchInit)
+  const response = await fetch(urlString, fetchInit)
   parseCookies(response, cookieJar)
 
   if (isRedirect(response)) {
@@ -41,7 +40,7 @@ export default async function request(
       response.headers.get('location') ?? '',
       response.url
     )
-    core.debug('Redirect to: ' + locationURL)
+    core.debug(`Redirect to: ${locationURL}`)
     return await request(locationURL.toString(), {
       cookie: cookieJar
     })
@@ -50,11 +49,11 @@ export default async function request(
   return response
 }
 
-function isRedirect(response: Response) {
+function isRedirect(response: Response): boolean {
   return response.status === 301 || response.status === 302
 }
 
-function cookieString(cookieJar: CookieJar, url: URL) {
+function cookieString(cookieJar: CookieJar, url: URL): string {
   return cookieJar
     ?.getCookies({
       domain: url.host,
@@ -65,7 +64,8 @@ function cookieString(cookieJar: CookieJar, url: URL) {
     .map(c => c.toString())
     .join('; ')
 }
-function parseCookies(response: Response, cookieJar?: CookieJar) {
+
+function parseCookies(response: Response, cookieJar?: CookieJar): void {
   if (cookieJar === undefined) {
     return
   }

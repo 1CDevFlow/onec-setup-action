@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { OSName } from 'src/onegetjs/model'
+import { OSName } from '../onegetjs/model'
 import * as cache from '@actions/cache'
 import * as glob from '@actions/glob'
 import path from 'path'

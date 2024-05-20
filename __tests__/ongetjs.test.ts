@@ -2,6 +2,8 @@ import OneGet from '../src/onegetjs'
 import { downloadRelease } from '../src/onegetjs'
 import { config } from 'dotenv'
 
+const TIMEOUT = 500000
+
 describe('onegetjs', () => {
   config()
   const client = new OneGet('/tmp/oneget')
@@ -28,30 +30,38 @@ describe('onegetjs', () => {
   //     await client.download(version, 'win', 'x86', 'full')
   // })
 
-  it('downloadRelease', async () => {
-    const files = await downloadRelease(
-      {
-        project: 'Platform83',
-        version: '8.3.10.2580',
-        osName: 'win',
-        architecture: 'x64',
-        type: 'full'
-      },
-      '/tmp/oneget/test',
-      true
-    )
-  })
+  it(
+    'downloadRelease',
+    async () => {
+      const files = await downloadRelease(
+        {
+          project: 'Platform83',
+          version: '8.3.10.2580',
+          osName: 'win',
+          architecture: 'x64',
+          type: 'full'
+        },
+        '/tmp/oneget/test',
+        true
+      )
+    },
+    TIMEOUT
+  )
 
-  it('downloadRelease EDT', async () => {
-    const files = await downloadRelease(
-      {
-        project: 'DevelopmentTools10',
-        version: '2023.3.5',
-        osName: 'linux',
-        offline: true
-      },
-      '/tmp/oneget/test',
-      true
-    )
-  })
+  it(
+    'downloadRelease EDT',
+    async () => {
+      const files = await downloadRelease(
+        {
+          project: 'DevelopmentTools10',
+          version: '2023.1.2',
+          osName: 'linux',
+          offline: true
+        },
+        '/tmp/oneget/test',
+        true
+      )
+    },
+    TIMEOUT
+  )
 })

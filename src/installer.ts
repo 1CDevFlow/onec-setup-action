@@ -15,12 +15,12 @@ export async function run(): Promise<void> {
 
   if (type === 'edt') {
     if (edt_version === undefined) {
-      throw 'EDT version not specified'
+      throw new Error('EDT version not specified')
     }
     installer = new tools.EDT(edt_version, process.platform)
   } else if (type === 'onec') {
     if (onec_version === undefined) {
-      throw 'Onec version not specified'
+      throw new Error('Onec version not specified')
     }
     installer = new tools.Platform83(onec_version, process.platform)
   } else {

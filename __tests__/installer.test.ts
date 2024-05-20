@@ -15,11 +15,13 @@ const getInputMock = jest.spyOn(core, 'getInput')
 const getBooleanInput = jest.spyOn(core, 'getBooleanInput')
 const setFailedMock = jest.spyOn(core, 'setFailed')
 const setOutputMock = jest.spyOn(core, 'setOutput')
+
 // Mock the action's entrypoint
 const runMock = jest.spyOn(installer, 'run')
 
 // Other utilities
 const timeRegex = /^\d{2}:\d{2}:\d{2}/
+const TIMEOUT = 50000
 
 // interface Input {
 //     type?: 'edt'|'onec',
@@ -46,42 +48,26 @@ describe('action', () => {
     Object.defineProperty(process, 'platform', realPlatform)
   })
 
-  it('sets the time output', async () => {
-    const input: Input = {
-      type: 'edt',
-      edt_version: '2023.3.5',
-      offline: 'true'
-    }
-    new Map()
-    // Set the action's inputs as return values from core.getInput()
-    getInputMock.mockImplementation((name: string): string => {
-      return input[name]
-    })
-    getBooleanInput.mockImplementation((name: string): boolean => {
-      return input[name] === 'true'
-    })
+  it(
+    'Download EDT',
+    async () => {
+      const input: Input = {
+        type: 'edt',
+        edt_version: '2023.1.2',
+        offline: 'true'
+      }
+      new Map()
+      // Set the action's inputs as return values from core.getInput()
+      getInputMock.mockImplementation((name: string): string => {
+        return input[name]
+      })
+      getBooleanInput.mockImplementation((name: string): boolean => {
+        return input[name] === 'true'
+      })
 
-    await installer.run()
-    expect(runMock).toHaveReturned()
-
-    // Verify that all of the core library functions were called correctly
-    expect(debugMock).toHaveBeenNthCalledWith(1, 'Waiting 500 milliseconds ...')
-    expect(debugMock).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(timeRegex)
-    )
-    expect(debugMock).toHaveBeenNthCalledWith(
-      3,
-      expect.stringMatching(timeRegex)
-    )
-    expect(setOutputMock).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      expect.stringMatching(timeRegex)
-    )
-  })
+      await installer.run()
+      expect(runMock).toHaveReturned()
+    },
+    TIMEOUT
+  )
 })
-
-function getValue<T, K extends keyof T>(data: T, key: K) {
-  return data[key]
-}

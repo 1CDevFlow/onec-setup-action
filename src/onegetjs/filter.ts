@@ -1,12 +1,6 @@
-import {
-  ReleaseFile,
-  OSName,
-  ArchitectureName,
-  DistributiveType,
-  ArtifactFilter
-} from './model'
+import { ReleaseFile, ArtifactFilter } from './model'
 
-const x64Pattern = /.*(\(64\-bit\)|\(64 бит\)).*/
+const x64Pattern = /.*(\(64-bit\)|\(64 бит\)).*/
 const rpmPattern = /.+RPM.+(ОС Linux|для Linux$|Linux-систем$).*/
 const debPattern = /.+DEB.+(ОС Linux|для Linux$|Linux-систем$).*/
 const linuxPattern = /.*(ОС Linux|для Linux$|Linux-систем$).*/
@@ -16,12 +10,12 @@ const clientPattern = /^Клиент.+/
 const serverPattern = /^[Cервер|Сервер].+/
 const thinPattern = /^Тонкий клиент.+/
 const fullPattern = /^Технологическая платформа.+/
-const offlinePattern = /.+без интернета.*/
+const offlinePattern = /.+(без интернета|оффлайн).*/
 
 type Predicate = (value: string) => unknown
 
 export function getFilters(artifactFilter: ArtifactFilter): Predicate[] {
-  let filters = new Array<Predicate>()
+  const filters = new Array<Predicate>()
   switch (artifactFilter.osName) {
     case 'win':
       filters.push(windowsPattern.test.bind(windowsPattern))
@@ -77,7 +71,7 @@ export function filter(
   filters: Predicate[]
 ): ReleaseFile[] {
   return files.filter(file => {
-    const f = filters.find(filter => !filter(file.name))
-    return f === undefined
+    const failure = filters.find(f => !f(file.name))
+    return failure === undefined
   })
 }

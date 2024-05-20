@@ -2,7 +2,11 @@ import * as filter from '../src/onegetjs/filter'
 
 describe('filter.ts', () => {
   it('windows x86 full', async () => {
-    let filters = filter.getFilters('win', 'x86', 'full')
+    let filters = filter.getFilters({
+      osName: 'win',
+      architecture: 'x86',
+      type: 'full'
+    })
     let result = filter.filter(fixtures, filters)
     console.dir(result)
     expect(result.length).toEqual(1)
@@ -19,17 +23,29 @@ describe('filter.ts', () => {
         url: 'https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.25.1286&path=Platform%5c8_3_25_1286%5cwindows_8_3_25_1286.rar'
       }
     ]
-    let filters = filter.getFilters('win', 'x86', 'full')
+    let filters = filter.getFilters({
+      osName: 'win',
+      architecture: 'x86',
+      type: 'full'
+    })
     let result1 = filter.filter(files, filters)
     expect(result1.length).toEqual(1)
 
-    filters = filter.getFilters('win', 'x64', 'full')
+    filters = filter.getFilters({
+      osName: 'win',
+      architecture: 'x64',
+      type: 'full'
+    })
     let result2 = filter.filter(files, filters)
     expect(result2.length).toEqual(1)
     expect(result1[0]).not.toEqual(result2[0])
   })
   it('Linux (deb) 64 client', async () => {
-    let filters = filter.getFilters('deb', 'x64', 'client')
+    let filters = filter.getFilters({
+      osName: 'deb',
+      architecture: 'x64',
+      type: 'client'
+    })
     let result = filter.filter(fixtures, filters)
     console.dir(result)
   })
