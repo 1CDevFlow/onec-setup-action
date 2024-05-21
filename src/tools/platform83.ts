@@ -88,9 +88,9 @@ export class Platform83 extends OnecTool {
 
   getRunFileNames(): string[] {
     if (this.isWindows()) {
-      return ['ibcmd.exe']
+      return ['1cv8.exe']
     } else {
-      return ['ibcmd']
+      return ['1cv8']
     }
   }
 }
