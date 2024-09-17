@@ -74332,7 +74332,6 @@ async function run() {
     const type = core.getInput('type');
     const edt_version = core.getInput('edt_version');
     const onec_version = core.getInput('onec_version');
-    //   const onegetVersion = core.getInput('oneget_version')
     const useCache = core.getBooleanInput('cache') && (0, utils_1.isCacheFeatureAvailable)();
     const useCacheDistr = core.getBooleanInput('cache_distr') && (0, utils_1.isCacheFeatureAvailable)();
     let installer;
