@@ -6,7 +6,6 @@ export async function run(): Promise<void> {
   const type = core.getInput('type')
   const edt_version = core.getInput('edt_version')
   const onec_version = core.getInput('onec_version')
-  //   const onegetVersion = core.getInput('oneget_version')
 
   const useCache = core.getBooleanInput('cache') && isCacheFeatureAvailable()
   const useCacheDistr =

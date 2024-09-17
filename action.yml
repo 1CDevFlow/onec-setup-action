@@ -21,10 +21,6 @@ inputs:
     required: false
     description: 'onec version'
     default: '8.3.20.1549'
-  oneget_version:
-    required: false
-    description: 'oneget version'
-    default: '0.6.0'
   cache:
     required: false
     description: 'use cache'
