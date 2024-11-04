@@ -72,17 +72,17 @@
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {
-    "@actions/cache": "^3.2.2",
+    "@actions/cache": "^3.3.0",
     "@actions/tool-cache": "^2.0.1",
     "@jest/globals": "^29.7.0",
     "@types/cookiejar": "^2.1.5",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^22.5.4",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.8.7",
     "@types/node-fetch": "^2.6.11",
-    "@typescript-eslint/eslint-plugin": "^8.4.0",
-    "@typescript-eslint/parser": "^8.4.0",
-    "@vercel/ncc": "^0.38.1",
-    "eslint": "^9.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
+    "@vercel/ncc": "^0.38.2",
+    "eslint": "^9.14.0",
     "eslint-plugin-jest": "^28.8.3",
     "eslint-plugin-jsonc": "^2.16.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -91,6 +91,6 @@
     "prettier": "^3.3.3",
     "prettier-eslint": "^16.3.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.3"
   }
 }
