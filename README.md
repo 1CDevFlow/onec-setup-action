@@ -8,14 +8,16 @@
 
 ## Использование
 
-Действие позволяет устанавливать 1С:Предприятие и 1C:EDT для использования в ваших рабочих процессах (workflows).
+Действие позволяет устанавливать 1С:Предприятие и 1C:EDT для использования в
+ваших рабочих процессах (workflows).
 
 Позволяет:
 
-* Скачивание дистрибутивов с `https://releases.1c.ru`, необходимо указать учетные данные
-* Установка в Windows и Linux
-* Кеширование скаченных дистрибутивов
-* Кеширование инсталляции
+- Скачивание дистрибутивов с `https://releases.1c.ru`, необходимо указать
+  учетные данные
+- Установка в Windows и Linux
+- Кеширование скаченных дистрибутивов
+- Кеширование инсталляции
 
 ### Установка 1С:Предприятие
 
@@ -30,7 +32,7 @@ jobs:
           type: onec # Тип устанавливаемого приложения
           onec_version: ${{ inputs.v8_version }}
           cache: ${{runner.os == 'Windows'}}
-        env: 
+        env:
           ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
           ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
 ```
@@ -42,16 +44,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Установка 1C:EDT
-      uses: 1CDevFlow/onec-setup-action@main
-      with:
-        type: edt # Тип устанавливаемого приложения
-        edt_version: ${{ inputs.edt_version }}
-        cache: true
-      env: 
-        ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
-        ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
-      timeout-minutes: 30
+      - name: Установка 1C:EDT
+        uses: 1CDevFlow/onec-setup-action@main
+        with:
+          type: edt # Тип устанавливаемого приложения
+          edt_version: ${{ inputs.edt_version }}
+          cache: true
+        env:
+          ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+          ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+        timeout-minutes: 30
 ```
 
 ## Contributing

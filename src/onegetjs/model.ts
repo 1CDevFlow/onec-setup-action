@@ -23,4 +23,9 @@ export interface ArtifactFilter {
 
 export type OSName = 'win' | 'mac' | 'linux' | 'deb' | 'rpm'
 export type ArchitectureName = 'x86' | 'x64'
-export type DistributiveType = 'full' | 'thinClient' | 'server' | 'client'
+export type DistributiveType =
+  | 'full'
+  | 'thinClient'
+  | 'server'
+  | 'client'
+  | 'clientOrServer'

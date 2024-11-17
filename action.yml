@@ -1,5 +1,6 @@
 name: 'Installer 1C:Enterprise 8 and 1C:EDT'
-description: 'Allows you to install 1C:Enterprise 8 or 1C:EDT of the required version'
+description:
+  'Allows you to install 1C:Enterprise 8 or 1C:EDT of the required version'
 author: '1CDevFlow'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.

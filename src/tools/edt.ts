@@ -17,7 +17,7 @@ export class EDT extends OnecTool {
     this.cache_ = this.getCacheDirs()
   }
   async download(): Promise<void> {
-    const onegetPlatform = this.getOnegetPlatform()
+    const onegetPlatform = this.getPlatformType()
 
     await downloadRelease(
       {

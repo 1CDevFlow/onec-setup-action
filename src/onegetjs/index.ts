@@ -16,6 +16,7 @@ import { unpackFiles } from '../unpacker'
 export default class OneGet {
   client: Client
   downloadTo: string
+
   constructor(downloadTo: string) {
     const login = process.env.ONEC_USERNAME ?? ''
     const password = process.env.ONEC_PASSWORD ?? ''
@@ -26,8 +27,7 @@ export default class OneGet {
   async auth(): Promise<void> {
     await this.client.auth()
   }
-  // https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.10.2580&path=Platform%255c8_3_10_2580%255cclient.deb64.tar.gz
-  // https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.10.2580&path=Platform%5c8_3_10_2580%5cclient.deb64.tar.gz
+
   async download(
     version: Version,
     artifactFilter: ArtifactFilter
@@ -44,24 +44,27 @@ export default class OneGet {
     const downloadedFiles: string[] = []
 
     for (const file of files) {
-      core.info(`Downloading ${file.name}`)
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        core.info(`Downloading ${file.name}`)
 
-      core.debug(`Get artifact download page: ${file.name}`)
-      const links = parser.fileDownloadLinks(
-        await this.client.getText(file.url)
-      )
+        core.debug(`Get artifact download page: ${file.name}`)
+        const links = parser.fileDownloadLinks(
+          await this.client.getText(file.url)
+        )
 
-      if (links.length === 0) {
-        core.error(`Don't found links for file ${file.name}`)
-        continue
-      }
-
-      for (const link of links) {
-        const location = await this.client.downloadFile(link, this.downloadTo)
-        if (location !== undefined) {
-          downloadedFiles.push(location)
-          break
+        if (links.length === 0) {
+          core.error(`Don't found links for file ${file.name}`)
+          continue
         }
+
+        for (const link of links) {
+          const location = await this.client.downloadFile(link, this.downloadTo)
+          if (location !== undefined) {
+            downloadedFiles.push(location)
+            break
+          }
+        }
+        break
       }
     }
 

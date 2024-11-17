@@ -8,6 +8,7 @@
 
 import * as core from '@actions/core'
 import * as installer from '../src/installer'
+import * as dotenv from 'dotenv'
 
 // Mock the GitHub Actions core library
 const debugMock = jest.spyOn(core, 'debug')
@@ -36,7 +37,7 @@ type Input = { [key: string]: string }
 describe('action', () => {
   // We need to copy/restore the whole property definition, not just the raw value
   const realPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
-
+  dotenv.config()
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -59,7 +60,7 @@ describe('action', () => {
       new Map()
       // Set the action's inputs as return values from core.getInput()
       getInputMock.mockImplementation((name: string): string => {
-        return input[name]
+        return input[name]n
       })
       getBooleanInput.mockImplementation((name: string): boolean => {
         return input[name] === 'true'
@@ -69,5 +70,26 @@ describe('action', () => {
       expect(runMock).toHaveReturned()
     },
     TIMEOUT
+  ),
+  it(
+    'Install 1C:Enterprise',
+    async () => {
+      const input: Input = {
+        type: 'onec',
+        onec_version: '8.3.14.2095',
+        offline: 'true'
+      }
+      // Set the action's inputs as return values from core.getInput()
+      getInputMock.mockImplementation((name: string): string => {
+        return input[name]
+      })
+      getBooleanInput.mockImplementation((name: string): boolean => {
+        return input[name] === 'true'
+      })
+
+      await installer.run()
+      expect(runMock).toHaveReturned()
+    },
+    TIMEOUT * 10
   )
 })

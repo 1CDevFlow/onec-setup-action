@@ -11,6 +11,7 @@ const serverPattern = /^[Cервер|Сервер].+/
 const thinPattern = /^Тонкий клиент.+/
 const fullPattern = /^Технологическая платформа.+/
 const offlinePattern = /.+(без интернета|оффлайн).*/
+const clientOrServerPattern = /^[Клиент|Cервер|Сервер].+/
 
 type Predicate = (value: string) => unknown
 
@@ -54,6 +55,9 @@ export function getFilters(artifactFilter: ArtifactFilter): Predicate[] {
       break
     case 'thinClient':
       filters.push(thinPattern.test.bind(thinPattern))
+      break
+    case 'clientOrServer':
+      filters.push(clientOrServerPattern.test.bind(clientOrServerPattern))
       break
   }
 

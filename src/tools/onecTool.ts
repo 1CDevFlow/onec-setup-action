@@ -122,7 +122,7 @@ export abstract class OnecTool implements IOnecTools {
     return PLATFORM_LIN === this.platform
   }
 
-  protected getOnegetPlatform(): OSName {
+  protected getPlatformType(): OSName {
     switch (this.platform) {
       case PLATFORM_WIN: {
         return 'win'

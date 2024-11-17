@@ -1,7 +1,9 @@
 import * as tc from '@actions/tool-cache'
 import { exec } from '@actions/exec'
+import * as core from '@actions/core'
 
 export async function unpack(file: string, destination: string): Promise<void> {
+  core.info(`Unpack ${file} to ${destination}`)
   if (file.endsWith('.zip')) {
     await tc.extractZip(file, destination)
   } else if (file.endsWith('.tar') || file.endsWith('.tar.gz')) {

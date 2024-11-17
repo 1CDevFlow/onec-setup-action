@@ -18,6 +18,7 @@ export async function run(): Promise<void> {
     }
     installer = new tools.EDT(edt_version, process.platform)
   } else if (type === 'onec') {
+    console.log('Install 1C:Enterprise v.' + onec_version)
     if (onec_version === undefined) {
       throw new Error('Onec version not specified')
     }
