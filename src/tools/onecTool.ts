@@ -44,6 +44,10 @@ export abstract class OnecTool implements IOnecTools {
     }
   }
 
+  protected getInstallersPath(): string {
+    return `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
+  }
+
   protected async handleLoadedCache(): Promise<void> {
     await this.updatePath()
   }
@@ -51,7 +55,7 @@ export abstract class OnecTool implements IOnecTools {
   async restoreInstallationPackage(): Promise<string | undefined> {
     const primaryKey = this.computeInstallerKey()
 
-    const restorePath = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
+    const restorePath = this.getInstallersPath()
     const matchedKey = await restoreCasheByPrimaryKey([restorePath], primaryKey)
 
     await this.handleLoadedCache()
@@ -93,7 +97,7 @@ export abstract class OnecTool implements IOnecTools {
   async saveInstallerCache(): Promise<void> {
     try {
       await cache.saveCache(
-        [`/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`],
+        [this.getInstallersPath()],
         this.computeInstallerKey()
       )
     } catch (error) {

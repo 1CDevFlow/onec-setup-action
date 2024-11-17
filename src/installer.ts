@@ -27,35 +27,26 @@ export async function run(): Promise<void> {
     throw new Error('failed to recognize the installer type')
   }
 
-  //   let installerRestoredKey: string | undefined
-  //   let installerRestored = false
-  let instalationRestoredKey: string | undefined
-  let instalationRestored = false
+  let installerRestoredKey: string | undefined
+  let installerRestored = false
+  let installationRestoredKey: string | undefined
+  let installationRestored = false
 
   if (useCache) {
-    instalationRestoredKey = await installer.restoreInstalledTool()
-    instalationRestored = instalationRestoredKey !== undefined
+    installationRestoredKey = await installer.restoreInstalledTool()
+    installationRestored = installationRestoredKey !== undefined
   }
 
-  if (instalationRestored) {
+  if (installationRestored) {
     return
   }
 
-  //   if (useCacheDistr) {
-  //     installerRestoredKey = await installer.restoreInstallationPackage()
-  //     installerRestored = installerRestoredKey !== undefined
-  //   }
+  if (useCacheDistr) {
+    installerRestoredKey = await installer.restoreInstallationPackage()
+    installerRestored = installerRestoredKey !== undefined
+  }
 
-  //   if (!installerRestored) {
-  //     const oneget = new OneGet(onegetVersion, process.platform)
-  //     await oneget.download()
-  //     await oneget.install()
-  //     await installer.download()
-  //     if (useCacheDistr) {
-  //       await installer.saveInstallerCache()
-  //     }
-  //   }
-  if (!instalationRestored) {
+  if (!installationRestored) {
     await installer.download()
     if (useCacheDistr) {
       await installer.saveInstallerCache()

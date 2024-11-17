@@ -40,7 +40,7 @@ export class Platform83 extends OnecTool {
         architecture: 'x64',
         type: installerType
       },
-      `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`,
+      this.getInstallersPath(),
       true
     )
 
@@ -54,9 +54,9 @@ export class Platform83 extends OnecTool {
         ? 'setup-full'
         : '*.deb'
 
-    const path = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
-    const patterns = [`${path}/**/${installerPattern}*`]
-    const globber = await glob.create(patterns.join('\n'))
+    const path = this.getInstallersPath()
+
+    const globber = await glob.create(`${path}/**/${installerPattern}*`)
     const files = await globber.glob()
     core.info(`found ${files}`)
 
@@ -71,12 +71,19 @@ export class Platform83 extends OnecTool {
         'client_thin,client_thin_fib,ws'
       ])
     } else if (this.isLinux()) {
-      await exec('sudo', [
-        'dpkg',
-        '-i',
-        '--force-all',
-        `${path}/1c-enterprise83*-{common,server,thin-client,client}_*.deb`
-      ])
+      for await (const mask of ['common', 'server', 'thin-client', 'client']) {
+        const files = await (
+          await glob.create(`${path}/1c-enterprise83-${mask}_*.deb`)
+        ).glob()
+
+        if (files.length !== 0) {
+          await exec('sudo', ['dpkg', '-i', '--force-all', `${files[0]}`])
+        } else {
+          core.warning(
+            `File not found for ${mask} (mask: 1c-enterprise83-${mask}_*.deb)`
+          )
+        }
+      }
     } else if (this.isWindows()) {
       await exec(files[0], [
         '/l',

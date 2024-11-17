@@ -74573,31 +74573,22 @@ async function run() {
     else {
         throw new Error('failed to recognize the installer type');
     }
-    //   let installerRestoredKey: string | undefined
-    //   let installerRestored = false
-    let instalationRestoredKey;
-    let instalationRestored = false;
+    let installerRestoredKey;
+    let installerRestored = false;
+    let installationRestoredKey;
+    let installationRestored = false;
     if (useCache) {
-        instalationRestoredKey = await installer.restoreInstalledTool();
-        instalationRestored = instalationRestoredKey !== undefined;
+        installationRestoredKey = await installer.restoreInstalledTool();
+        installationRestored = installationRestoredKey !== undefined;
     }
-    if (instalationRestored) {
+    if (installationRestored) {
         return;
     }
-    //   if (useCacheDistr) {
-    //     installerRestoredKey = await installer.restoreInstallationPackage()
-    //     installerRestored = installerRestoredKey !== undefined
-    //   }
-    //   if (!installerRestored) {
-    //     const oneget = new OneGet(onegetVersion, process.platform)
-    //     await oneget.download()
-    //     await oneget.install()
-    //     await installer.download()
-    //     if (useCacheDistr) {
-    //       await installer.saveInstallerCache()
-    //     }
-    //   }
-    if (!instalationRestored) {
+    if (useCacheDistr) {
+        installerRestoredKey = await installer.restoreInstallationPackage();
+        installerRestored = installerRestoredKey !== undefined;
+    }
+    if (!installationRestored) {
         await installer.download();
         if (useCacheDistr) {
             await installer.saveInstallerCache();
@@ -75315,12 +75306,15 @@ class OnecTool {
             }
         }
     }
+    getInstallersPath() {
+        return `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
+    }
     async handleLoadedCache() {
         await this.updatePath();
     }
     async restoreInstallationPackage() {
         const primaryKey = this.computeInstallerKey();
-        const restorePath = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
+        const restorePath = this.getInstallersPath();
         const matchedKey = await (0, utils_1.restoreCasheByPrimaryKey)([restorePath], primaryKey);
         await this.handleLoadedCache();
         await this.handleMatchResult(matchedKey, primaryKey);
@@ -75350,7 +75344,7 @@ class OnecTool {
     }
     async saveInstallerCache() {
         try {
-            await cache.saveCache([`/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`], this.computeInstallerKey());
+            await cache.saveCache([this.getInstallersPath()], this.computeInstallerKey());
         }
         catch (error) {
             if (error instanceof Error)
@@ -75463,7 +75457,7 @@ class Platform83 extends onecTool_1.OnecTool {
             osName: platformType,
             architecture: 'x64',
             type: installerType
-        }, `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`, true);
+        }, this.getInstallersPath(), true);
         core.info(`onec was downloaded`);
     }
     async install() {
@@ -75472,9 +75466,8 @@ class Platform83 extends onecTool_1.OnecTool {
             : this.useNewInstaller()
                 ? 'setup-full'
                 : '*.deb';
-        const path = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
-        const patterns = [`${path}/**/${installerPattern}*`];
-        const globber = await glob.create(patterns.join('\n'));
+        const path = this.getInstallersPath();
+        const globber = await glob.create(`${path}/**/${installerPattern}*`);
         const files = await globber.glob();
         core.info(`found ${files}`);
         if (this.isLinux() && this.useNewInstaller()) {
@@ -75489,12 +75482,15 @@ class Platform83 extends onecTool_1.OnecTool {
             ]);
         }
         else if (this.isLinux()) {
-            await (0, exec_1.exec)('sudo', [
-                'dpkg',
-                '-i',
-                '--force-all',
-                `${path}/1c-enterprise83*-{common,server,thin-client,client}_*.deb`
-            ]);
+            for await (const mask of ['common', 'server', 'thin-client', 'client']) {
+                const files = await (await glob.create(`${path}/1c-enterprise83-${mask}_*.deb`)).glob();
+                if (files.length !== 0) {
+                    await (0, exec_1.exec)('sudo', ['dpkg', '-i', '--force-all', `${files[0]}`]);
+                }
+                else {
+                    core.warning(`File not found for ${mask} (mask: 1c-enterprise83-${mask}_*.deb)`);
+                }
+            }
         }
         else if (this.isWindows()) {
             await (0, exec_1.exec)(files[0], [

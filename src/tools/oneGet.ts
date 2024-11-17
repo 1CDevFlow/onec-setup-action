@@ -28,7 +28,7 @@ class OneGet extends OnecTool {
       platform = 'darwin'
       extension = 'tar.gz'
     }
-    const installerPath = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
+    const installerPath = this.getInstallersPath()
     await io.rmRF(installerPath)
 
     const archivePath = `${installerPath}/oneget.${extension}`
@@ -49,7 +49,7 @@ class OneGet extends OnecTool {
     } else if (this.isMac()) {
       extension = 'tar.gz'
     }
-    const onegetPath = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}/oneget.${extension}`
+    const onegetPath = `${this.getInstallersPath()}/oneget.${extension}`
 
     let oneGetFolder
     if (this.isWindows()) {
