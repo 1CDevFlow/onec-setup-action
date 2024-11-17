@@ -60,7 +60,7 @@ describe('action', () => {
       new Map()
       // Set the action's inputs as return values from core.getInput()
       getInputMock.mockImplementation((name: string): string => {
-        return input[name]n
+        return input[name]
       })
       getBooleanInput.mockImplementation((name: string): boolean => {
         return input[name] === 'true'
@@ -71,25 +71,25 @@ describe('action', () => {
     },
     TIMEOUT
   ),
-  it(
-    'Install 1C:Enterprise',
-    async () => {
-      const input: Input = {
-        type: 'onec',
-        onec_version: '8.3.14.2095',
-        offline: 'true'
-      }
-      // Set the action's inputs as return values from core.getInput()
-      getInputMock.mockImplementation((name: string): string => {
-        return input[name]
-      })
-      getBooleanInput.mockImplementation((name: string): boolean => {
-        return input[name] === 'true'
-      })
+    it(
+      'Install 1C:Enterprise',
+      async () => {
+        const input: Input = {
+          type: 'onec',
+          onec_version: '8.3.14.2095',
+          offline: 'true'
+        }
+        // Set the action's inputs as return values from core.getInput()
+        getInputMock.mockImplementation((name: string): string => {
+          return input[name]
+        })
+        getBooleanInput.mockImplementation((name: string): boolean => {
+          return input[name] === 'true'
+        })
 
-      await installer.run()
-      expect(runMock).toHaveReturned()
-    },
-    TIMEOUT * 10
-  )
+        await installer.run()
+        expect(runMock).toHaveReturned()
+      },
+      TIMEOUT * 10
+    )
 })

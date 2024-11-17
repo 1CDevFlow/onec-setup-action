@@ -12,11 +12,14 @@ const thinPattern = /^Тонкий клиент.+/
 const fullPattern = /^Технологическая платформа.+/
 const offlinePattern = /.+(без интернета|оффлайн).*/
 const clientOrServerPattern = /^[Клиент|Cервер|Сервер].+/
+const SHA = /.*(Контрольная сумма|sha).*/
 
 type Predicate = (value: string) => unknown
 
 export function getFilters(artifactFilter: ArtifactFilter): Predicate[] {
   const filters = new Array<Predicate>()
+  filters.push(v => !SHA.test(v))
+
   switch (artifactFilter.osName) {
     case 'win':
       filters.push(windowsPattern.test.bind(windowsPattern))

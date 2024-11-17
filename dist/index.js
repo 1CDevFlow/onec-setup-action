@@ -74788,8 +74788,10 @@ const thinPattern = /^Тонкий клиент.+/;
 const fullPattern = /^Технологическая платформа.+/;
 const offlinePattern = /.+(без интернета|оффлайн).*/;
 const clientOrServerPattern = /^[Клиент|Cервер|Сервер].+/;
+const SHA = /.*(Контрольная сумма|sha).*/;
 function getFilters(artifactFilter) {
     const filters = new Array();
+    filters.push(v => !SHA.test(v));
     switch (artifactFilter.osName) {
         case 'win':
             filters.push(windowsPattern.test.bind(windowsPattern));
@@ -75465,7 +75467,11 @@ class Platform83 extends onecTool_1.OnecTool {
         core.info(`onec was downloaded`);
     }
     async install() {
-        const installerPattern = this.isWindows() ? 'setup.exe' : 'setup-full';
+        const installerPattern = this.isWindows()
+            ? 'setup.exe'
+            : this.useNewInstaller()
+                ? 'setup-full'
+                : '*.deb';
         const path = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
         const patterns = [`${path}/**/${installerPattern}*`];
         const globber = await glob.create(patterns.join('\n'));

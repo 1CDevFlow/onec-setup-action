@@ -48,13 +48,16 @@ export class Platform83 extends OnecTool {
   }
 
   async install(): Promise<void> {
-    const installerPattern = this.isWindows() ? 'setup.exe' : 'setup-full'
+    const installerPattern = this.isWindows()
+      ? 'setup.exe'
+      : this.useNewInstaller()
+        ? 'setup-full'
+        : '*.deb'
 
     const path = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`
     const patterns = [`${path}/**/${installerPattern}*`]
     const globber = await glob.create(patterns.join('\n'))
     const files = await globber.glob()
-
     core.info(`found ${files}`)
 
     if (this.isLinux() && this.useNewInstaller()) {

@@ -2,18 +2,18 @@ import * as filter from '../src/onegetjs/filter'
 
 describe('filter.ts', () => {
   it('windows x86 full', async () => {
-    let filters = filter.getFilters({
+    const filters = filter.getFilters({
       osName: 'win',
       architecture: 'x86',
       type: 'full'
     })
-    let result = filter.filter(fixtures, filters)
+    const result = filter.filter(fixtures, filters)
     console.dir(result)
     expect(result.length).toEqual(1)
   })
 
   it('x64/x86', async () => {
-    let files = [
+    const files = [
       {
         name: 'Технологическая платформа 1С:Предприятия (64-bit) для Windows',
         url: 'https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.25.1286&path=Platform%5c8_3_25_1286%5cwindows64full_8_3_25_1286.rar'
@@ -28,7 +28,7 @@ describe('filter.ts', () => {
       architecture: 'x86',
       type: 'full'
     })
-    let result1 = filter.filter(files, filters)
+    const result1 = filter.filter(files, filters)
     expect(result1.length).toEqual(1)
 
     filters = filter.getFilters({
@@ -36,22 +36,22 @@ describe('filter.ts', () => {
       architecture: 'x64',
       type: 'full'
     })
-    let result2 = filter.filter(files, filters)
+    const result2 = filter.filter(files, filters)
     expect(result2.length).toEqual(1)
     expect(result1[0]).not.toEqual(result2[0])
   })
   it('Linux (deb) 64 client', async () => {
-    let filters = filter.getFilters({
+    const filters = filter.getFilters({
       osName: 'deb',
       architecture: 'x64',
       type: 'client'
     })
-    let result = filter.filter(fixtures, filters)
+    const result = filter.filter(fixtures, filters)
     console.dir(result)
   })
 })
 
-let fixtures = [
+const fixtures = [
   {
     name: 'Технологическая платформа 8.3. Версия 8.3.25.1286. Список изменений и порядок обновления',
     url: 'https://releases.1c.ru/version_file?nick=Platform83&ver=8.3.25.1286&path=Platform%5c8_3_25_1286%5c1cv8upd_8_3_25_1286.htm'

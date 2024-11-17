@@ -6,8 +6,8 @@ const TIMEOUT = 500000
 
 describe('onegetjs', () => {
   config()
-  const client = new OneGet('/tmp/oneget')
-
+  // const client = new OneGet('/tmp/oneget')
+  //
   // it('versionInfo', async () => {
   //     await client.auth()
   //     await client.versionInfo('Platform83', '8.3.10.2580');
@@ -33,7 +33,7 @@ describe('onegetjs', () => {
   it(
     'downloadRelease',
     async () => {
-      const files = await downloadRelease(
+      await downloadRelease(
         {
           project: 'Platform83',
           version: '8.3.10.2580',
@@ -51,7 +51,7 @@ describe('onegetjs', () => {
   it(
     'downloadRelease EDT',
     async () => {
-      const files = await downloadRelease(
+      await downloadRelease(
         {
           project: 'DevelopmentTools10',
           version: '2023.1.2',
