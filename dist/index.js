@@ -74588,7 +74588,7 @@ async function run() {
         installerRestoredKey = await installer.restoreInstallationPackage();
         installerRestored = installerRestoredKey !== undefined;
     }
-    if (!installationRestored) {
+    if (!installerRestored) {
         await installer.download();
         if (useCacheDistr) {
             await installer.saveInstallerCache();
@@ -75078,24 +75078,13 @@ async function request(urlString, init) {
 function isRedirect(response) {
     return response.status === 301 || response.status === 302;
 }
-function cookieString(cookieJar, url) {
-    return cookieJar
-        ?.getCookies({
-        domain: url.host,
-        path: url.pathname,
-        secure: true,
-        script: false
-    })
-        .map(c => c.toString())
-        .join('; ');
-}
 function parseCookies(response, cookieJar) {
     if (cookieJar === undefined) {
         return;
     }
     response.headers.raw()['set-cookie']?.map(v => {
-        let c = new cookiejar_1.Cookie(v);
-        cookieJar?.setCookie(c);
+        const cookie = new cookiejar_1.Cookie(v);
+        cookieJar?.setCookie(cookie);
     });
 }
 
@@ -75450,8 +75439,7 @@ class Platform83 extends onecTool_1.OnecTool {
             installerType = 'clientOrServer';
             platformType = 'deb';
         }
-        //releases.1c.ru/version_file?nick=Platform83&ver=8.3.14.2095&path=Platform%5c8_3_14_2095%5cdeb64_8_3_14_2095.tar.gz
-        https: await (0, onegetjs_1.downloadRelease)({
+        await (0, onegetjs_1.downloadRelease)({
             project: 'Platform83',
             version: this.version,
             osName: platformType,

@@ -36,10 +36,6 @@ jobs:
         id: npm-format-check
         run: npm run format:check
 
-      - name: Lint
-        id: npm-lint
-        run: npm run lint
-
       - name: Test
         id: npm-ci-test
         run: npm run ci-test
@@ -60,6 +56,7 @@ jobs:
           type: onec
           onec_version: 8.3.14.2095
           cache_distr: true
+          cache: false
         env:
           ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
           ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}

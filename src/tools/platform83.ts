@@ -31,8 +31,8 @@ export class Platform83 extends OnecTool {
       installerType = 'clientOrServer'
       platformType = 'deb'
     }
-    //releases.1c.ru/version_file?nick=Platform83&ver=8.3.14.2095&path=Platform%5c8_3_14_2095%5cdeb64_8_3_14_2095.tar.gz
-    https: await downloadRelease(
+
+    await downloadRelease(
       {
         project: 'Platform83',
         version: this.version,

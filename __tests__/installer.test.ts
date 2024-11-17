@@ -11,42 +11,31 @@ import * as installer from '../src/installer'
 import * as dotenv from 'dotenv'
 
 // Mock the GitHub Actions core library
-const debugMock = jest.spyOn(core, 'debug')
 const getInputMock = jest.spyOn(core, 'getInput')
 const getBooleanInput = jest.spyOn(core, 'getBooleanInput')
-const setFailedMock = jest.spyOn(core, 'setFailed')
-const setOutputMock = jest.spyOn(core, 'setOutput')
 
 // Mock the action's entrypoint
 const runMock = jest.spyOn(installer, 'run')
 
 // Other utilities
-const timeRegex = /^\d{2}:\d{2}:\d{2}/
 const TIMEOUT = 50000
-
-// interface Input {
-//     type?: 'edt'|'onec',
-//     edt_version?: string,
-//     onec_version?: string,
-//     cache?: boolean,
-//     cache_distr?: boolean
-// }
 
 type Input = { [key: string]: string }
 
+function configureInput(input: Input): void {
+  // Set the action's inputs as return values from core.getInput()
+  getInputMock.mockImplementation((name: string): string => {
+    return input[name]
+  })
+  getBooleanInput.mockImplementation((name: string): boolean => {
+    return input[name] === 'true'
+  })
+}
+
 describe('action', () => {
-  // We need to copy/restore the whole property definition, not just the raw value
-  const realPlatform = Object.getOwnPropertyDescriptor(process, 'platform')
   dotenv.config()
   beforeEach(() => {
     jest.clearAllMocks()
-  })
-  afterEach(() => {
-    if (!realPlatform) {
-      return
-    }
-    // Restore the real property value after each test
-    Object.defineProperty(process, 'platform', realPlatform)
   })
 
   it(
@@ -57,39 +46,43 @@ describe('action', () => {
         edt_version: '2023.1.2',
         offline: 'true'
       }
-      new Map()
-      // Set the action's inputs as return values from core.getInput()
-      getInputMock.mockImplementation((name: string): string => {
-        return input[name]
-      })
-      getBooleanInput.mockImplementation((name: string): boolean => {
-        return input[name] === 'true'
-      })
+
+      configureInput(input)
 
       await installer.run()
       expect(runMock).toHaveReturned()
     },
     TIMEOUT
-  ),
-    it(
-      'Install 1C:Enterprise',
-      async () => {
-        const input: Input = {
-          type: 'onec',
-          onec_version: '8.3.14.2095',
-          offline: 'true'
-        }
-        // Set the action's inputs as return values from core.getInput()
-        getInputMock.mockImplementation((name: string): string => {
-          return input[name]
-        })
-        getBooleanInput.mockImplementation((name: string): boolean => {
-          return input[name] === 'true'
-        })
+  )
 
-        await installer.run()
-        expect(runMock).toHaveReturned()
-      },
-      TIMEOUT * 10
-    )
+  it(
+    'Install 1C:Enterprise v. 8.3.14.2095',
+    async () => {
+      const input: Input = {
+        type: 'onec',
+        onec_version: '8.3.14.2095'
+      }
+
+      configureInput(input)
+
+      await installer.run()
+      expect(runMock).toHaveReturned()
+    },
+    TIMEOUT * 10
+  )
+  it(
+    'Install 1C:Enterprise v. 8.3.10.2580',
+    async () => {
+      const input: Input = {
+        type: 'onec',
+        onec_version: '8.3.10.2580'
+      }
+
+      configureInput(input)
+
+      await installer.run()
+      expect(runMock).toHaveReturned()
+    },
+    TIMEOUT * 10
+  )
 })

@@ -1,4 +1,3 @@
-import OneGet from '../src/onegetjs'
 import { downloadRelease } from '../src/onegetjs'
 import { config } from 'dotenv'
 

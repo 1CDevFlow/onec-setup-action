@@ -53,24 +53,12 @@ function isRedirect(response: Response): boolean {
   return response.status === 301 || response.status === 302
 }
 
-function cookieString(cookieJar: CookieJar, url: URL): string {
-  return cookieJar
-    ?.getCookies({
-      domain: url.host,
-      path: url.pathname,
-      secure: true,
-      script: false
-    })
-    .map(c => c.toString())
-    .join('; ')
-}
-
 function parseCookies(response: Response, cookieJar?: CookieJar): void {
   if (cookieJar === undefined) {
     return
   }
   response.headers.raw()['set-cookie']?.map(v => {
-    let c = new Cookie(v)
-    cookieJar?.setCookie(c)
+    const cookie = new Cookie(v)
+    cookieJar?.setCookie(cookie)
   })
 }

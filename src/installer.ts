@@ -46,12 +46,13 @@ export async function run(): Promise<void> {
     installerRestored = installerRestoredKey !== undefined
   }
 
-  if (!installationRestored) {
+  if (!installerRestored) {
     await installer.download()
     if (useCacheDistr) {
       await installer.saveInstallerCache()
     }
   }
+
   await installer.install()
   await installer.updatePath()
 
