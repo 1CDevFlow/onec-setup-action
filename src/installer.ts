@@ -48,13 +48,17 @@ export async function run(): Promise<void> {
 
   if (!installerRestored) {
     await installer.download()
+    core.info('Installer downloaded')
     if (useCacheDistr) {
       await installer.saveInstallerCache()
+      core.info('Installer cached')
     }
   }
 
   await installer.install()
+  core.info('Installing success')
   await installer.updatePath()
+  core.info('Env variable `PATH` updated')
 
   if (useCache) {
     await installer.saveInstalledCache()

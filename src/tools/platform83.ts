@@ -107,8 +107,10 @@ export class Platform83 extends OnecTool {
   getCacheDirs(): string[] {
     if (this.isWindows()) {
       return ['C:/Program Files/1cv8']
-    } else if (this.isLinux()) {
+    } else if (this.isLinux() && this.useNewInstaller()) {
       return ['/opt/1cv8']
+    } else if (this.isLinux()) {
+      return ['/opt/1C/v8.3']
     } else if (this.isMac()) {
       return ['/opt/1cv8'] // /Applications/1cv8.localized/8.3.21.1644/ but only .app
     } else {

@@ -74590,12 +74590,16 @@ async function run() {
     }
     if (!installerRestored) {
         await installer.download();
+        core.info('Installer downloaded');
         if (useCacheDistr) {
             await installer.saveInstallerCache();
+            core.info('Installer cached');
         }
     }
     await installer.install();
+    core.info('Installing success');
     await installer.updatePath();
+    core.info('Env variable `PATH` updated');
     if (useCache) {
         await installer.saveInstalledCache();
     }
@@ -75504,8 +75508,11 @@ class Platform83 extends onecTool_1.OnecTool {
         if (this.isWindows()) {
             return ['C:/Program Files/1cv8'];
         }
-        else if (this.isLinux()) {
+        else if (this.isLinux() && this.useNewInstaller()) {
             return ['/opt/1cv8'];
+        }
+        else if (this.isLinux()) {
+            return ['/opt/1C/v8.3'];
         }
         else if (this.isMac()) {
             return ['/opt/1cv8']; // /Applications/1cv8.localized/8.3.21.1644/ but only .app
