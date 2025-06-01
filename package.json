@@ -73,7 +73,7 @@
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {
-    "@actions/cache": "^3.2.2",
+    "@actions/cache": "^4.0.3",
     "@actions/tool-cache": "^2.0.1",
     "@jest/globals": "^29.7.0",
     "@types/cookiejar": "^2.1.5",
