@@ -59,7 +59,8 @@ export class EDT extends OnecTool {
     const install_arg = [
       'install',
       '--ignore-hardware-checks',
-      '--ignore-signature-warnings'
+      '--ignore-signature-warnings',
+      '--overwrite'
     ]
 
     if (this.isLinux()) {
