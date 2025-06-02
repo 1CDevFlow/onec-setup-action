@@ -3,7 +3,7 @@ import { OSName } from '../onegetjs/model'
 import * as cache from '@actions/cache'
 import * as glob from '@actions/glob'
 import path from 'path'
-import { restoreCasheByPrimaryKey } from '../utils'
+import { restoreCacheByPrimaryKey } from '../utils'
 
 const PLATFORM_WIN = 'win32'
 const PLATFORM_LIN = 'linux'
@@ -56,7 +56,7 @@ export abstract class OnecTool implements IOnecTools {
     const primaryKey = this.computeInstallerKey()
 
     const restorePath = this.getInstallersPath()
-    const matchedKey = await restoreCasheByPrimaryKey([restorePath], primaryKey)
+    const matchedKey = await restoreCacheByPrimaryKey([restorePath], primaryKey)
 
     await this.handleLoadedCache()
     await this.handleMatchResult(matchedKey, primaryKey)
@@ -67,7 +67,7 @@ export abstract class OnecTool implements IOnecTools {
   async restoreInstalledTool(): Promise<string | undefined> {
     const primaryKey = this.computeInstalledKey()
 
-    const matchedKey = await restoreCasheByPrimaryKey(this.cache_, primaryKey)
+    const matchedKey = await restoreCacheByPrimaryKey(this.cache_, primaryKey)
 
     await this.handleLoadedCache()
     await this.handleMatchResult(matchedKey, primaryKey)

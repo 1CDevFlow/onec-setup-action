@@ -73,9 +73,9 @@ export class EDT extends OnecTool {
 
   getCacheDirs(): string[] {
     if (this.isWindows()) {
-      return ['C:/Program Files/1C']
+      return ['C:/Program Files/1C', 'C:/ProgramData/1C/1CE/ring-commands.cfg']
     } else if (this.isLinux()) {
-      return ['/opt/1C']
+      return ['/opt/1C', '/etc/1C/1CE/ring-commands.cfg']
     } else if (this.isMac()) {
       return ['/Applications/1C']
     } else {
