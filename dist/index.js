@@ -80807,7 +80807,8 @@ class EDT extends onecTool_1.OnecTool {
         const install_arg = [
             'install',
             '--ignore-hardware-checks',
-            '--ignore-signature-warnings'
+            '--ignore-signature-warnings',
+            '--overwrite'
         ];
         if (this.isLinux()) {
             await (0, exec_1.exec)('sudo', [files[0], ...install_arg]);
