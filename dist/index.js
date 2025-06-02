@@ -80821,10 +80821,10 @@ class EDT extends onecTool_1.OnecTool {
     }
     getCacheDirs() {
         if (this.isWindows()) {
-            return ['C:/Program Files/1C'];
+            return ['C:/Program Files/1C', 'C:/ProgramData/1C/1CE/ring-commands.cfg'];
         }
         else if (this.isLinux()) {
-            return ['/opt/1C'];
+            return ['/opt/1C', '/etc/1C/1CE/ring-commands.cfg'];
         }
         else if (this.isMac()) {
             return ['/Applications/1C'];
@@ -80939,14 +80939,14 @@ class OnecTool {
     async restoreInstallationPackage() {
         const primaryKey = this.computeInstallerKey();
         const restorePath = this.getInstallersPath();
-        const matchedKey = await (0, utils_1.restoreCasheByPrimaryKey)([restorePath], primaryKey);
+        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)([restorePath], primaryKey);
         await this.handleLoadedCache();
         await this.handleMatchResult(matchedKey, primaryKey);
         return matchedKey;
     }
     async restoreInstalledTool() {
         const primaryKey = this.computeInstalledKey();
-        const matchedKey = await (0, utils_1.restoreCasheByPrimaryKey)(this.cache_, primaryKey);
+        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)(this.cache_, primaryKey);
         await this.handleLoadedCache();
         await this.handleMatchResult(matchedKey, primaryKey);
         return matchedKey;
@@ -81256,7 +81256,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WINDOWS_PLATFORMS = exports.WINDOWS_ARCHS = exports.IS_MAC = exports.IS_LINUX = exports.IS_WINDOWS = void 0;
 exports.isGhes = isGhes;
 exports.isCacheFeatureAvailable = isCacheFeatureAvailable;
-exports.restoreCasheByPrimaryKey = restoreCasheByPrimaryKey;
+exports.restoreCacheByPrimaryKey = restoreCacheByPrimaryKey;
 const core = __importStar(__nccwpck_require__(2186));
 const cache = __importStar(__nccwpck_require__(7799));
 exports.IS_WINDOWS = process.platform === 'win32';
@@ -81279,7 +81279,7 @@ function isCacheFeatureAvailable() {
     core.warning('The runner was not able to contact the cache service. Caching will be skipped');
     return false;
 }
-async function restoreCasheByPrimaryKey(paths, key) {
+async function restoreCacheByPrimaryKey(paths, key) {
     let matchedKey;
     try {
         core.info(`Trying to restore: ${paths.slice().toString()}`);
