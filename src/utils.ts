@@ -31,7 +31,7 @@ export function isCacheFeatureAvailable(): boolean {
   return false
 }
 
-export async function restoreCasheByPrimaryKey(
+export async function restoreCacheByPrimaryKey(
   paths: string[],
   key: string
 ): Promise<string | undefined> {
