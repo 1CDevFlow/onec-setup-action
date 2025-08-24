@@ -69,7 +69,7 @@
     "@actions/core": "^1.11.1",
     "compare-versions": "^6.1.1",
     "cookiejar": "^2.1.4",
-    "node-fetch": "^2.7.0",
+    "node-fetch": "^3.3.2",
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {
