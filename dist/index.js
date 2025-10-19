@@ -38737,7 +38737,7 @@ function expand(str, isTop) {
   var isOptions = m.body.indexOf(',') >= 0;
   if (!isSequence && !isOptions) {
     // {a},b}
-    if (m.post.match(/,.*\}/)) {
+    if (m.post.match(/,(?!,).*\}/)) {
       str = m.pre + '{' + m.body + escClose + m.post;
       return expand(str);
     }
@@ -61320,7 +61320,7 @@ module.exports = {
 
 
 const { parseSetCookie } = __nccwpck_require__(4408)
-const { stringify, getHeadersList } = __nccwpck_require__(3121)
+const { stringify } = __nccwpck_require__(3121)
 const { webidl } = __nccwpck_require__(1744)
 const { Headers } = __nccwpck_require__(554)
 
@@ -61396,14 +61396,13 @@ function getSetCookies (headers) {
 
   webidl.brandCheck(headers, Headers, { strict: false })
 
-  const cookies = getHeadersList(headers).cookies
+  const cookies = headers.getSetCookie()
 
   if (!cookies) {
     return []
   }
 
-  // In older versions of undici, cookies is a list of name:value.
-  return cookies.map((pair) => parseSetCookie(Array.isArray(pair) ? pair[1] : pair))
+  return cookies.map((pair) => parseSetCookie(pair))
 }
 
 /**
@@ -61831,14 +61830,15 @@ module.exports = {
 /***/ }),
 
 /***/ 3121:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((module) => {
 
 "use strict";
 
 
-const assert = __nccwpck_require__(9491)
-const { kHeadersList } = __nccwpck_require__(2785)
-
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
 function isCTLExcludingHtab (value) {
   if (value.length === 0) {
     return false
@@ -62099,31 +62099,13 @@ function stringify (cookie) {
   return out.join('; ')
 }
 
-let kHeadersListNode
-
-function getHeadersList (headers) {
-  if (headers[kHeadersList]) {
-    return headers[kHeadersList]
-  }
-
-  if (!kHeadersListNode) {
-    kHeadersListNode = Object.getOwnPropertySymbols(headers).find(
-      (symbol) => symbol.description === 'headers list'
-    )
-
-    assert(kHeadersListNode, 'Headers cannot be parsed')
-  }
-
-  const headersList = headers[kHeadersListNode]
-  assert(headersList)
-
-  return headersList
-}
-
 module.exports = {
   isCTLExcludingHtab,
-  stringify,
-  getHeadersList
+  validateCookieName,
+  validateCookiePath,
+  validateCookieValue,
+  toIMFDate,
+  stringify
 }
 
 
@@ -64052,6 +64034,14 @@ const { isUint8Array, isArrayBuffer } = __nccwpck_require__(9830)
 const { File: UndiciFile } = __nccwpck_require__(8511)
 const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(685)
 
+let random
+try {
+  const crypto = __nccwpck_require__(6005)
+  random = (max) => crypto.randomInt(0, max)
+} catch {
+  random = (max) => Math.floor(Math.random(max))
+}
+
 let ReadableStream = globalThis.ReadableStream
 
 /** @type {globalThis['File']} */
@@ -64137,7 +64127,7 @@ function extractBody (object, keepalive = false) {
     // Set source to a copy of the bytes held by object.
     source = new Uint8Array(object.buffer.slice(object.byteOffset, object.byteOffset + object.byteLength))
   } else if (util.isFormDataLike(object)) {
-    const boundary = `----formdata-undici-0${`${Math.floor(Math.random() * 1e11)}`.padStart(11, '0')}`
+    const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, '0')}`
     const prefix = `--${boundary}\r\nContent-Disposition: form-data`
 
     /*! formdata-polyfill. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
@@ -66119,6 +66109,7 @@ const {
   isValidHeaderName,
   isValidHeaderValue
 } = __nccwpck_require__(2538)
+const util = __nccwpck_require__(3837)
 const { webidl } = __nccwpck_require__(1744)
 const assert = __nccwpck_require__(9491)
 
@@ -66672,6 +66663,9 @@ Object.defineProperties(Headers.prototype, {
   [Symbol.toStringTag]: {
     value: 'Headers',
     configurable: true
+  },
+  [util.inspect.custom]: {
+    enumerable: false
   }
 })
 
@@ -75848,6 +75842,20 @@ class Pool extends PoolBase {
       ? { ...options.interceptors }
       : undefined
     this[kFactory] = factory
+
+    this.on('connectionError', (origin, targets, error) => {
+      // If a connection error occurs, we remove the client from the pool,
+      // and emit a connectionError event. They will not be re-used.
+      // Fixes https://github.com/nodejs/undici/issues/3895
+      for (const target of targets) {
+        // Do not use kRemoveClient here, as it will close the client,
+        // but the client cannot be closed in this state.
+        const idx = this[kClients].indexOf(target)
+        if (idx !== -1) {
+          this[kClients].splice(idx, 1)
+        }
+      }
+    })
   }
 
   [kGetDispatcher] () {
@@ -80113,6 +80121,744 @@ module.exports.implForWrapper = function (wrapper) {
 
 /***/ }),
 
+/***/ 8880:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * Базовый класс инсталлятора для onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BaseInstaller = void 0;
+const constants_1 = __nccwpck_require__(8593);
+/**
+ * Базовый класс для всех инсталляторов
+ */
+class BaseInstaller {
+    cacheManager;
+    pathManager;
+    logger;
+    constructor(cacheManager, pathManager, logger) {
+        this.cacheManager = cacheManager;
+        this.pathManager = pathManager;
+        this.logger = logger;
+    }
+    /**
+     * Восстанавливает установленный инструмент из кеша
+     */
+    async restoreInstalledTool() {
+        const primaryKey = this.computeInstalledKey();
+        const cacheDirs = this.pathManager.getCacheDirectories();
+        const matchedKey = await this.cacheManager.restoreCache(cacheDirs, primaryKey);
+        if (matchedKey) {
+            await this.pathManager.updatePath();
+        }
+        return matchedKey;
+    }
+    /**
+     * Восстанавливает установщик из кеша
+     */
+    async restoreInstaller() {
+        const primaryKey = this.computeInstallerKey();
+        const installerPath = this.pathManager.getInstallerCachePath();
+        const matchedKey = await this.cacheManager.restoreCache([installerPath], primaryKey);
+        return matchedKey;
+    }
+    /**
+     * Сохраняет установленный инструмент в кеш
+     */
+    async saveInstalledTool() {
+        const primaryKey = this.computeInstalledKey();
+        const cacheDirs = this.pathManager.getCacheDirectories();
+        await this.cacheManager.saveCache(cacheDirs, primaryKey);
+    }
+    /**
+     * Сохраняет установщик в кеш
+     */
+    async saveInstaller() {
+        const primaryKey = this.computeInstallerKey();
+        const installerPath = this.pathManager.getInstallerCachePath();
+        await this.cacheManager.saveCache([installerPath], primaryKey);
+    }
+    /**
+     * Вычисляет ключ кеша для установленного инструмента
+     */
+    computeInstalledKey() {
+        return `${constants_1.CACHE_KEY_PREFIX}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
+    }
+    /**
+     * Вычисляет ключ кеша для установщика
+     */
+    computeInstallerKey() {
+        return `${constants_1.CACHE_KEY_PREFIX}--${constants_1.INSTALLER_CACHE_PRIMARY_KEY}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
+    }
+}
+exports.BaseInstaller = BaseInstaller;
+
+
+/***/ }),
+
+/***/ 3633:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Менеджер кеша для onec-setup-action
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CacheManager = void 0;
+exports.restoreCacheByPrimaryKey = restoreCacheByPrimaryKey;
+const cache = __importStar(__nccwpck_require__(7799));
+const core = __importStar(__nccwpck_require__(2186));
+const logger_1 = __nccwpck_require__(8836);
+/**
+ * Реализация менеджера кеша
+ */
+class CacheManager {
+    logger;
+    constructor(logger) {
+        this.logger = logger;
+    }
+    /**
+     * Восстанавливает кеш по ключу
+     */
+    async restoreCache(paths, primaryKey, restoreKeys) {
+        try {
+            const matchedKey = await cache.restoreCache(paths, primaryKey, restoreKeys || [primaryKey]);
+            if (matchedKey) {
+                this.logger.info(`Cache restored from key: ${matchedKey}`);
+                core.setOutput('cache-hit', true);
+            }
+            else {
+                this.logger.info(`${primaryKey} cache is not found`);
+                core.setOutput('cache-hit', false);
+            }
+            return matchedKey;
+        }
+        catch (error) {
+            this.logger.warning(`Failed to restore cache: ${error instanceof Error ? error.message : String(error)}`);
+            core.setOutput('cache-hit', false);
+            return undefined;
+        }
+    }
+    /**
+     * Сохраняет кеш
+     */
+    async saveCache(paths, key) {
+        try {
+            this.logger.info(`Trying to save: ${paths.toString()}`);
+            await cache.saveCache(paths, key);
+            this.logger.info(`Cache saved with key: ${key}`);
+        }
+        catch (error) {
+            this.logger.warning(`Failed to save cache: ${error instanceof Error ? error.message : String(error)}`);
+            throw error;
+        }
+    }
+    /**
+     * Проверяет доступность функции кеширования
+     */
+    isFeatureAvailable() {
+        return cache.isFeatureAvailable();
+    }
+}
+exports.CacheManager = CacheManager;
+/**
+ * Функция для восстановления кеша по основному ключу (для обратной совместимости)
+ */
+async function restoreCacheByPrimaryKey(paths, primaryKey) {
+    const logger = new logger_1.Logger();
+    const cacheManager = new CacheManager(logger);
+    return await cacheManager.restoreCache(paths, primaryKey);
+}
+
+
+/***/ }),
+
+/***/ 8926:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * Сервис установки для onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InstallationService = void 0;
+const installer_factory_1 = __nccwpck_require__(383);
+const input_validator_1 = __nccwpck_require__(8464);
+const logger_1 = __nccwpck_require__(8836);
+const base_errors_1 = __nccwpck_require__(1107);
+/**
+ * Сервис для управления процессом установки
+ */
+class InstallationService {
+    logger;
+    inputValidator;
+    constructor(logger, inputValidator) {
+        this.logger = logger || new logger_1.Logger();
+        this.inputValidator = inputValidator || new input_validator_1.InputValidator();
+    }
+    /**
+     * Выполняет установку на основе конфигурации
+     */
+    async install(config) {
+        try {
+            // Валидируем входные данные
+            this.inputValidator.validateAll({
+                type: config.type,
+                edt_version: config.type === 'edt' ? config.version : '',
+                onec_version: config.type === 'onec' ? config.version : '',
+                username: config.username,
+                password: config.password
+            });
+            // Создаем инсталлятор
+            const installer = await installer_factory_1.InstallerFactory.createInstaller({
+                type: config.type,
+                version: config.version,
+                platform: config.platform,
+                logger: this.logger
+            });
+            // Выполняем установку
+            await this.performInstallation(installer, config);
+        }
+        catch (error) {
+            if (error instanceof base_errors_1.ValidationError) {
+                this.logger.setFailed(`Validation error: ${error.message}`);
+            }
+            else {
+                this.logger.setFailed(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            throw error;
+        }
+    }
+    /**
+     * Выполняет процесс установки
+     */
+    async performInstallation(installer, config) {
+        // Проверяем кеш установленного инструмента
+        if (config.useCache) {
+            const installedKey = await installer.restoreInstalledTool();
+            if (installedKey) {
+                this.logger.info('Installation restored from cache');
+                return;
+            }
+        }
+        // Проверяем кеш установщика
+        let installerRestored = false;
+        if (config.useCacheDistr) {
+            const installerKey = await installer.restoreInstaller();
+            installerRestored = installerKey !== undefined;
+        }
+        // Скачиваем установщик, если не восстановлен из кеша
+        if (!installerRestored) {
+            await installer.download();
+            this.logger.info('Installer downloaded');
+            // Сохраняем установщик в кеш
+            if (config.useCacheDistr) {
+                await installer.saveInstaller();
+                this.logger.info('Installer cached');
+            }
+        }
+        // Устанавливаем приложение
+        await installer.install();
+        this.logger.info('Installation completed successfully');
+        // Сохраняем установленный инструмент в кеш
+        if (config.useCache) {
+            await installer.saveInstalledTool();
+            this.logger.info('Installation cached');
+        }
+    }
+}
+exports.InstallationService = InstallationService;
+
+
+/***/ }),
+
+/***/ 383:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * Фабрика инсталляторов для onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InstallerFactory = void 0;
+const base_installer_1 = __nccwpck_require__(8880);
+const cache_manager_1 = __nccwpck_require__(3633);
+const platform_detector_1 = __nccwpck_require__(7081);
+const path_manager_1 = __nccwpck_require__(6869);
+const logger_1 = __nccwpck_require__(8836);
+const base_errors_1 = __nccwpck_require__(1107);
+/**
+ * Фабрика для создания инсталляторов
+ */
+class InstallerFactory {
+    /**
+     * Создает инсталлятор на основе конфигурации
+     */
+    static async createInstaller(config) {
+        const logger = config.logger || new logger_1.Logger();
+        const platformDetector = config.platformDetector || new platform_detector_1.PlatformDetector(config.platform);
+        const cacheManager = config.cacheManager || new cache_manager_1.CacheManager(logger);
+        // Создаем менеджер путей
+        const pathManager = new path_manager_1.PathManager(platformDetector, config.type, logger);
+        // Создаем конкретный инсталлятор
+        if (config.type === 'edt') {
+            return await this.createEdtInstaller(config, cacheManager, pathManager, logger);
+        }
+        else if (config.type === 'onec') {
+            return await this.createOnecInstaller(config, cacheManager, pathManager, logger);
+        }
+        else {
+            throw new base_errors_1.ValidationError(`Unsupported installer type: ${config.type}`);
+        }
+    }
+    /**
+     * Создает инсталлятор EDT
+     */
+    static async createEdtInstaller(config, cacheManager, pathManager, logger) {
+        // Динамически импортируем EDT класс для избежания циклических зависимостей
+        const { EDT } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 5991, 23));
+        // Создаем EDT инсталлятор с новой архитектурой
+        return new EDTInstaller(config.version, config.platform, cacheManager, pathManager, logger);
+    }
+    /**
+     * Создает инсталлятор OneC
+     */
+    static async createOnecInstaller(config, cacheManager, pathManager, logger) {
+        // Динамически импортируем Platform83 класс
+        const { Platform83 } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 1366, 23));
+        // Создаем OneC инсталлятор с новой архитектурой
+        return new OnecInstaller(config.version, config.platform, cacheManager, pathManager, logger);
+    }
+}
+exports.InstallerFactory = InstallerFactory;
+/**
+ * Адаптер для EDT инсталлятора
+ */
+class EDTInstaller extends base_installer_1.BaseInstaller {
+    version;
+    platform;
+    INSTALLED_CACHE_PRIMARY_KEY = 'edt';
+    edtInstaller;
+    constructor(version, platform, cacheManager, pathManager, logger) {
+        super(cacheManager, pathManager, logger);
+        this.version = version;
+        this.platform = platform;
+        // Создаем оригинальный EDT инсталлятор
+        const { EDT } = __nccwpck_require__(5991);
+        this.edtInstaller = new EDT(version, platform);
+    }
+    async download() {
+        await this.edtInstaller.download();
+    }
+    async install() {
+        await this.edtInstaller.install();
+    }
+}
+/**
+ * Адаптер для OneC инсталлятора
+ */
+class OnecInstaller extends base_installer_1.BaseInstaller {
+    version;
+    platform;
+    INSTALLED_CACHE_PRIMARY_KEY = 'onec';
+    onecInstaller;
+    constructor(version, platform, cacheManager, pathManager, logger) {
+        super(cacheManager, pathManager, logger);
+        this.version = version;
+        this.platform = platform;
+        // Создаем оригинальный Platform83 инсталлятор
+        const { Platform83 } = __nccwpck_require__(1366);
+        this.onecInstaller = new Platform83(version, platform);
+    }
+    async download() {
+        await this.onecInstaller.download();
+    }
+    async install() {
+        await this.onecInstaller.install();
+    }
+}
+
+
+/***/ }),
+
+/***/ 6869:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Менеджер путей для onec-setup-action
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PathManager = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const glob = __importStar(__nccwpck_require__(8090));
+const path = __importStar(__nccwpck_require__(1017));
+const constants_1 = __nccwpck_require__(8593);
+/**
+ * Реализация менеджера путей
+ */
+class PathManager {
+    platformDetector;
+    toolType;
+    logger;
+    constructor(platformDetector, toolType, logger) {
+        this.platformDetector = platformDetector;
+        this.toolType = toolType;
+        this.logger = logger;
+    }
+    /**
+     * Получает пути кеша для установленного инструмента
+     */
+    getCacheDirectories() {
+        if (this.toolType === 'edt') {
+            return this.getEdtCacheDirectories();
+        }
+        else {
+            return this.getOnecCacheDirectories();
+        }
+    }
+    /**
+     * Получает пути кеша для установщика
+     */
+    getInstallerCachePath() {
+        return `/tmp/installer`;
+    }
+    /**
+     * Получает имена исполняемых файлов
+     */
+    getExecutableNames() {
+        if (this.toolType === 'edt') {
+            return this.getEdtExecutableNames();
+        }
+        else {
+            return this.getOnecExecutableNames();
+        }
+    }
+    /**
+     * Обновляет переменную PATH
+     */
+    async updatePath() {
+        const cacheDirs = this.getCacheDirectories();
+        const executableNames = this.getExecutableNames();
+        for (const executableName of executableNames) {
+            const pattern = `${cacheDirs[0]}/**/${executableName}`;
+            this.logger.debug(`Searching for executable: ${pattern}`);
+            const globber = await glob.create(pattern);
+            for await (const file of globber.globGenerator()) {
+                const dirPath = path.dirname(file);
+                this.logger.info(`Adding to PATH: ${dirPath} (${file})`);
+                core.addPath(dirPath);
+                break; // Добавляем только первый найденный путь
+            }
+        }
+    }
+    /**
+     * Получает пути кеша для EDT
+     */
+    getEdtCacheDirectories() {
+        if (this.platformDetector.isWindows()) {
+            return constants_1.EDT_WINDOWS_CACHE_DIRS;
+        }
+        else if (this.platformDetector.isLinux()) {
+            return constants_1.EDT_LINUX_CACHE_DIRS;
+        }
+        else if (this.platformDetector.isMac()) {
+            return constants_1.EDT_MAC_CACHE_DIRS;
+        }
+        return [];
+    }
+    /**
+     * Получает пути кеша для OneC
+     */
+    getOnecCacheDirectories() {
+        if (this.platformDetector.isWindows()) {
+            return constants_1.ONEC_WINDOWS_CACHE_DIRS;
+        }
+        else if (this.platformDetector.isLinux()) {
+            // Для Linux нужно определить, новая или старая версия
+            // Пока используем новую версию
+            return constants_1.ONEC_LINUX_NEW_CACHE_DIRS;
+        }
+        else if (this.platformDetector.isMac()) {
+            return constants_1.ONEC_MAC_CACHE_DIRS;
+        }
+        return [];
+    }
+    /**
+     * Получает имена исполняемых файлов для EDT
+     */
+    getEdtExecutableNames() {
+        if (this.platformDetector.isWindows()) {
+            return constants_1.EDT_RUN_FILES_WINDOWS;
+        }
+        else {
+            return constants_1.EDT_RUN_FILES_LINUX;
+        }
+    }
+    /**
+     * Получает имена исполняемых файлов для OneC
+     */
+    getOnecExecutableNames() {
+        if (this.platformDetector.isWindows()) {
+            return constants_1.ONEC_RUN_FILES_WINDOWS;
+        }
+        else {
+            return constants_1.ONEC_RUN_FILES_LINUX;
+        }
+    }
+}
+exports.PathManager = PathManager;
+
+
+/***/ }),
+
+/***/ 7081:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * Детектор платформы для onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PlatformDetector = void 0;
+const base_errors_1 = __nccwpck_require__(1107);
+const constants_1 = __nccwpck_require__(8593);
+/**
+ * Реализация детектора платформы
+ */
+class PlatformDetector {
+    currentPlatform;
+    constructor(platform = process.platform) {
+        this.currentPlatform = platform;
+    }
+    /**
+     * Определяет тип платформы
+     */
+    getPlatformType(platform) {
+        switch (platform) {
+            case constants_1.PLATFORM_WIN:
+                return 'win';
+            case constants_1.PLATFORM_LIN:
+                return 'linux';
+            case constants_1.PLATFORM_MAC:
+                return 'mac';
+            default:
+                throw new base_errors_1.PlatformError(`Unrecognized os ${platform}`);
+        }
+    }
+    /**
+     * Проверяет, является ли платформа Windows
+     */
+    isWindows() {
+        return this.currentPlatform === constants_1.PLATFORM_WIN;
+    }
+    /**
+     * Проверяет, является ли платформа Linux
+     */
+    isLinux() {
+        return this.currentPlatform === constants_1.PLATFORM_LIN;
+    }
+    /**
+     * Проверяет, является ли платформа macOS
+     */
+    isMac() {
+        return this.currentPlatform === constants_1.PLATFORM_MAC;
+    }
+    /**
+     * Получает текущую платформу
+     */
+    getCurrentPlatform() {
+        return this.currentPlatform;
+    }
+    /**
+     * Получает тип текущей платформы
+     */
+    getCurrentPlatformType() {
+        return this.getPlatformType(this.currentPlatform);
+    }
+}
+exports.PlatformDetector = PlatformDetector;
+
+
+/***/ }),
+
+/***/ 1107:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Базовые классы ошибок для onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PlatformError = exports.ValidationError = exports.CacheError = exports.InstallationError = exports.DownloadError = exports.AuthenticationError = exports.OnecSetupError = void 0;
+/**
+ * Базовый класс для всех ошибок onec-setup-action
+ */
+class OnecSetupError extends Error {
+    details;
+    constructor(message, details) {
+        super(message);
+        this.details = details;
+        this.name = this.constructor.name;
+    }
+    /**
+     * Возвращает детальную информацию об ошибке
+     */
+    getErrorInfo() {
+        return {
+            code: this.code,
+            category: this.category,
+            message: this.message,
+            details: this.details
+        };
+    }
+}
+exports.OnecSetupError = OnecSetupError;
+/**
+ * Ошибки аутентификации
+ */
+class AuthenticationError extends OnecSetupError {
+    code = 'AUTH_FAILED';
+    category = 'AUTH';
+    constructor(message = 'Authentication failed', details) {
+        super(message, details);
+    }
+}
+exports.AuthenticationError = AuthenticationError;
+/**
+ * Ошибки загрузки
+ */
+class DownloadError extends OnecSetupError {
+    code = 'DOWNLOAD_FAILED';
+    category = 'DOWNLOAD';
+    constructor(message = 'Download failed', details) {
+        super(message, details);
+    }
+}
+exports.DownloadError = DownloadError;
+/**
+ * Ошибки установки
+ */
+class InstallationError extends OnecSetupError {
+    code = 'INSTALLATION_FAILED';
+    category = 'INSTALL';
+    constructor(message = 'Installation failed', details) {
+        super(message, details);
+    }
+}
+exports.InstallationError = InstallationError;
+/**
+ * Ошибки кеширования
+ */
+class CacheError extends OnecSetupError {
+    code = 'CACHE_FAILED';
+    category = 'CACHE';
+    constructor(message = 'Cache operation failed', details) {
+        super(message, details);
+    }
+}
+exports.CacheError = CacheError;
+/**
+ * Ошибки валидации
+ */
+class ValidationError extends OnecSetupError {
+    code = 'VALIDATION_FAILED';
+    category = 'VALIDATION';
+    constructor(message = 'Validation failed', details) {
+        super(message, details);
+    }
+}
+exports.ValidationError = ValidationError;
+/**
+ * Ошибки платформы
+ */
+class PlatformError extends OnecSetupError {
+    code = 'PLATFORM_ERROR';
+    category = 'PLATFORM';
+    constructor(message = 'Platform error', details) {
+        super(message, details);
+    }
+}
+exports.PlatformError = PlatformError;
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -80134,13 +80880,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const installer = __importStar(__nccwpck_require__(2574));
 installer.run();
@@ -80169,70 +80925,70 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(2186));
 const utils_1 = __nccwpck_require__(1314);
-const tools = __importStar(__nccwpck_require__(5435));
+const logger_1 = __nccwpck_require__(8836);
+const installation_service_1 = __nccwpck_require__(8926);
+const constants_1 = __nccwpck_require__(8593);
+/**
+ * Основная функция запуска установки
+ */
 async function run() {
-    const type = core.getInput('type');
-    const edt_version = core.getInput('edt_version');
-    const onec_version = core.getInput('onec_version');
-    const useCache = core.getBooleanInput('cache') && (0, utils_1.isCacheFeatureAvailable)();
-    const useCacheDistr = core.getBooleanInput('cache_distr') && (0, utils_1.isCacheFeatureAvailable)();
-    let installer;
-    if (type === 'edt') {
-        if (edt_version === undefined) {
-            throw new Error('EDT version not specified');
+    const logger = new logger_1.Logger();
+    const installationService = new installation_service_1.InstallationService(logger);
+    try {
+        // Получаем входные данные
+        const type = core.getInput('type');
+        const edt_version = core.getInput('edt_version');
+        const onec_version = core.getInput('onec_version');
+        const username = process.env.ONEC_USERNAME || '';
+        const password = process.env.ONEC_PASSWORD || '';
+        // Определяем версию и тип
+        const version = type === 'edt'
+            ? edt_version || constants_1.DEFAULT_EDT_VERSION
+            : onec_version || constants_1.DEFAULT_ONEC_VERSION;
+        // Логируем информацию об установке
+        if (type === 'edt') {
+            logger.info(`Installing 1C:EDT v.${version}`);
         }
-        installer = new tools.EDT(edt_version, process.platform);
-    }
-    else if (type === 'onec') {
-        console.log('Install 1C:Enterprise v.' + onec_version);
-        if (onec_version === undefined) {
-            throw new Error('Onec version not specified');
+        else {
+            logger.info(`Installing 1C:Enterprise v.${version}`);
         }
-        installer = new tools.Platform83(onec_version, process.platform);
+        // Создаем конфигурацию установки
+        const config = {
+            type,
+            version,
+            platform: process.platform,
+            useCache: core.getBooleanInput('cache') && (0, utils_1.isCacheFeatureAvailable)(),
+            useCacheDistr: core.getBooleanInput('cache_distr') && (0, utils_1.isCacheFeatureAvailable)(),
+            username,
+            password
+        };
+        // Выполняем установку
+        await installationService.install(config);
     }
-    else {
-        throw new Error('failed to recognize the installer type');
-    }
-    let installerRestoredKey;
-    let installerRestored = false;
-    let installationRestoredKey;
-    let installationRestored = false;
-    if (useCache) {
-        installationRestoredKey = await installer.restoreInstalledTool();
-        installationRestored = installationRestoredKey !== undefined;
-    }
-    if (installationRestored) {
-        return;
-    }
-    if (useCacheDistr) {
-        installerRestoredKey = await installer.restoreInstallationPackage();
-        installerRestored = installerRestoredKey !== undefined;
-    }
-    if (!installerRestored) {
-        await installer.download();
-        core.info('Installer downloaded');
-        if (useCacheDistr) {
-            await installer.saveInstallerCache();
-            core.info('Installer cached');
-        }
-    }
-    await installer.install();
-    core.info('Installing success');
-    await installer.updatePath();
-    core.info('Env variable `PATH` updated');
-    if (useCache) {
-        await installer.saveInstalledCache();
+    catch (error) {
+        logger.setFailed(`Installation failed: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
     }
 }
 
@@ -80260,13 +81016,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -80499,13 +81265,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -80664,13 +81440,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -80747,13 +81533,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EDT = void 0;
 const onecTool_1 = __nccwpck_require__(6803);
@@ -80848,33 +81644,6 @@ exports.EDT = EDT;
 
 /***/ }),
 
-/***/ 5435:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-__exportStar(__nccwpck_require__(5991), exports);
-__exportStar(__nccwpck_require__(1366), exports);
-__exportStar(__nccwpck_require__(6803), exports);
-
-
-/***/ }),
-
 /***/ 6803:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -80896,13 +81665,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -81039,13 +81818,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Platform83 = void 0;
 const onecTool_1 = __nccwpck_require__(6803);
@@ -81188,13 +81977,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.unpack = unpack;
 exports.unpackFiles = unpackFiles;
@@ -81246,13 +82045,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WINDOWS_PLATFORMS = exports.WINDOWS_ARCHS = exports.IS_MAC = exports.IS_LINUX = exports.IS_WINDOWS = void 0;
 exports.isGhes = isGhes;
@@ -81294,6 +82103,354 @@ async function restoreCacheByPrimaryKey(paths, key) {
     }
     return matchedKey;
 }
+
+
+/***/ }),
+
+/***/ 8593:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Константы для проекта onec-setup-action
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ARCHITECTURES = exports.OS_NAMES = exports.DISTRIBUTIVE_TYPES = exports.DEFAULT_ONEC_VERSION = exports.DEFAULT_EDT_VERSION = exports.ONEC_RUN_FILES_LINUX = exports.ONEC_RUN_FILES_WINDOWS = exports.EDT_RUN_FILES_LINUX = exports.EDT_RUN_FILES_WINDOWS = exports.ONEC_MAC_CACHE_DIRS = exports.ONEC_LINUX_OLD_CACHE_DIRS = exports.ONEC_LINUX_NEW_CACHE_DIRS = exports.ONEC_WINDOWS_CACHE_DIRS = exports.EDT_MAC_CACHE_DIRS = exports.EDT_LINUX_CACHE_DIRS = exports.EDT_WINDOWS_CACHE_DIRS = exports.EDT_LINUX_EXECUTABLES = exports.EDT_WINDOWS_EXECUTABLES = exports.LINUX_EXECUTABLE = exports.WINDOWS_EXECUTABLE = exports.MAC_INSTALL_PATH = exports.LINUX_INSTALL_PATH = exports.WINDOWS_INSTALL_PATH = exports.INSTALL_TIMEOUT = exports.DOWNLOAD_TIMEOUT = exports.DEFAULT_TIMEOUT = exports.PROJECT_DEVELOPMENT_TOOLS = exports.PROJECT_PLATFORM83 = exports.INSTALLER_CACHE_PRIMARY_KEY = exports.CACHE_KEY_PREFIX = exports.WINDOWS_PLATFORMS = exports.WINDOWS_ARCHS = exports.PLATFORM_MAC = exports.PLATFORM_LIN = exports.PLATFORM_WIN = exports.PROJECTS_URL = exports.TICKET_URL = exports.LOGIN_URL = exports.RELEASES_URL = void 0;
+// URL-адреса
+exports.RELEASES_URL = 'https://releases.1c.ru';
+exports.LOGIN_URL = 'https://login.1c.ru';
+exports.TICKET_URL = `${exports.LOGIN_URL}/rest/public/ticket/get`;
+exports.PROJECTS_URL = '/project/';
+// Платформы
+exports.PLATFORM_WIN = 'win32';
+exports.PLATFORM_LIN = 'linux';
+exports.PLATFORM_MAC = 'darwin';
+// Архитектуры
+exports.WINDOWS_ARCHS = ['x86', 'x64'];
+exports.WINDOWS_PLATFORMS = ['win32', 'win64'];
+// Кеш
+exports.CACHE_KEY_PREFIX = 'setup';
+exports.INSTALLER_CACHE_PRIMARY_KEY = 'installer';
+// Проекты
+exports.PROJECT_PLATFORM83 = 'Platform83';
+exports.PROJECT_DEVELOPMENT_TOOLS = 'DevelopmentTools10';
+// Таймауты (в миллисекундах)
+exports.DEFAULT_TIMEOUT = 30000;
+exports.DOWNLOAD_TIMEOUT = 60000;
+exports.INSTALL_TIMEOUT = 300000;
+// Пути установки
+exports.WINDOWS_INSTALL_PATH = 'C:/Program Files/1cv8';
+exports.LINUX_INSTALL_PATH = '/opt/1cv8';
+exports.MAC_INSTALL_PATH = '/opt/1cv8';
+// Имена исполняемых файлов
+exports.WINDOWS_EXECUTABLE = '1cv8.exe';
+exports.LINUX_EXECUTABLE = '1cv8';
+exports.EDT_WINDOWS_EXECUTABLES = ['ring.bat', '1cedtcli.bat'];
+exports.EDT_LINUX_EXECUTABLES = ['ring', '1cedtcli.sh'];
+// Кеш директории для EDT
+exports.EDT_WINDOWS_CACHE_DIRS = [
+    'C:/Program Files/1C',
+    'C:/ProgramData/1C/1CE/ring-commands.cfg'
+];
+exports.EDT_LINUX_CACHE_DIRS = ['/opt/1C', '/etc/1C/1CE/ring-commands.cfg'];
+exports.EDT_MAC_CACHE_DIRS = ['/Applications/1C'];
+// Кеш директории для OneC
+exports.ONEC_WINDOWS_CACHE_DIRS = ['C:/Program Files/1cv8'];
+exports.ONEC_LINUX_NEW_CACHE_DIRS = ['/opt/1cv8'];
+exports.ONEC_LINUX_OLD_CACHE_DIRS = ['/opt/1C/v8.3'];
+exports.ONEC_MAC_CACHE_DIRS = ['/Applications/1cv8'];
+// Исполняемые файлы для EDT (алиасы для совместимости)
+exports.EDT_RUN_FILES_WINDOWS = exports.EDT_WINDOWS_EXECUTABLES;
+exports.EDT_RUN_FILES_LINUX = exports.EDT_LINUX_EXECUTABLES;
+// Исполняемые файлы для OneC
+exports.ONEC_RUN_FILES_WINDOWS = ['1cv8.exe'];
+exports.ONEC_RUN_FILES_LINUX = ['1cv8'];
+// Версии по умолчанию
+exports.DEFAULT_EDT_VERSION = '2024.2.6';
+exports.DEFAULT_ONEC_VERSION = '8.3.20.1549';
+// Типы дистрибутивов
+exports.DISTRIBUTIVE_TYPES = {
+    FULL: 'full',
+    THIN_CLIENT: 'thinClient',
+    SERVER: 'server',
+    CLIENT: 'client',
+    CLIENT_OR_SERVER: 'clientOrServer'
+};
+// Операционные системы
+exports.OS_NAMES = {
+    WIN: 'win',
+    MAC: 'mac',
+    LINUX: 'linux',
+    DEB: 'deb',
+    RPM: 'rpm'
+};
+// Архитектуры
+exports.ARCHITECTURES = {
+    X86: 'x86',
+    X64: 'x64'
+};
+
+
+/***/ }),
+
+/***/ 8836:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Logger = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+/**
+ * Безопасный логгер, который маскирует чувствительные данные
+ */
+class Logger {
+    /**
+     * Создает экземпляр Logger
+     */
+    constructor() {
+        // Пустой конструктор для совместимости с интерфейсом
+    }
+    /**
+     * Методы экземпляра для совместимости с интерфейсом ILogger
+     */
+    info(message) {
+        Logger.info(message);
+    }
+    warning(message) {
+        Logger.warning(message);
+    }
+    error(message) {
+        Logger.error(message);
+    }
+    debug(message) {
+        Logger.debug(message);
+    }
+    setFailed(message) {
+        Logger.setFailed(message);
+    }
+    /**
+     * Маскирует чувствительные данные в сообщениях
+     * @param message - исходное сообщение
+     * @returns сообщение с замаскированными данными
+     */
+    static maskSensitiveData(message) {
+        return (message
+            // Маскируем URL с параметрами аутентификации (сначала, чтобы не конфликтовать с другими)
+            .replace(/\/ticket\/auth\?token=[^&\s]+/gi, '/ticket/auth?token=***')
+            // Маскируем учетные данные в URL
+            .replace(/\/\/[^:]+:[^@]+@/gi, '//***:***@')
+            // Маскируем токены аутентификации
+            .replace(/token=[^&\s]+/gi, 'token=***')
+            // Маскируем пароли
+            .replace(/password[=:]\s*\S+/gi, 'password=***')
+            // Маскируем логины
+            .replace(/login[=:]\s*\S+/gi, 'login=***'));
+    }
+    /**
+     * Логирует информационное сообщение
+     * @param message - сообщение для логирования
+     */
+    static info(message) {
+        core.info(this.maskSensitiveData(message));
+    }
+    /**
+     * Логирует отладочное сообщение
+     * @param message - сообщение для логирования
+     */
+    static debug(message) {
+        core.debug(this.maskSensitiveData(message));
+    }
+    /**
+     * Логирует предупреждение
+     * @param message - сообщение для логирования
+     */
+    static warning(message) {
+        core.warning(this.maskSensitiveData(message));
+    }
+    /**
+     * Логирует ошибку
+     * @param message - сообщение для логирования
+     */
+    static error(message) {
+        core.error(this.maskSensitiveData(message));
+    }
+    /**
+     * Логирует ошибку и устанавливает статус failed
+     * @param message - сообщение для логирования
+     */
+    static setFailed(message) {
+        core.setFailed(this.maskSensitiveData(message));
+    }
+}
+exports.Logger = Logger;
+
+
+/***/ }),
+
+/***/ 8464:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.InputValidator = void 0;
+const base_errors_1 = __nccwpck_require__(1107);
+const constants_1 = __nccwpck_require__(8593);
+/**
+ * Валидатор входных данных для onec-setup-action
+ */
+class InputValidator {
+    /**
+     * Создает экземпляр InputValidator
+     */
+    constructor() {
+        // Пустой конструктор для совместимости с интерфейсом
+    }
+    /**
+     * Методы экземпляра для совместимости с интерфейсом IInputValidator
+     */
+    validateAll(inputs) {
+        InputValidator.validateAll(inputs);
+    }
+    validateType(type) {
+        InputValidator.validateType(type);
+    }
+    validateEdtVersion(version) {
+        InputValidator.validateEdtVersion(version);
+    }
+    validateOnecVersion(version) {
+        InputValidator.validateOnecVersion(version);
+    }
+    validateCredentials(username, password) {
+        InputValidator.validateCredentials(username, password);
+    }
+    /**
+     * Валидирует тип установщика
+     * @param type - тип установщика
+     * @throws ValidationError если тип неверный
+     */
+    static validateType(type) {
+        if (!type) {
+            throw new base_errors_1.ValidationError('Type is required');
+        }
+        if (!['edt', 'onec'].includes(type)) {
+            throw new base_errors_1.ValidationError(`Invalid type: ${type}. Must be 'edt' or 'onec'`);
+        }
+    }
+    /**
+     * Валидирует версию EDT
+     * @param version - версия EDT
+     * @throws ValidationError если версия неверная
+     */
+    static validateEdtVersion(version) {
+        if (!version) {
+            throw new base_errors_1.ValidationError('EDT version is required when type is "edt"');
+        }
+        // Проверяем формат версии EDT (например, 2024.2.6)
+        const versionPattern = /^\d{4}\.\d+\.\d+$/;
+        if (!versionPattern.test(version)) {
+            throw new base_errors_1.ValidationError(`Invalid EDT version format: ${version}. Expected format: YYYY.M.N`);
+        }
+    }
+    /**
+     * Валидирует версию 1С:Предприятие
+     * @param version - версия 1С:Предприятие
+     * @throws ValidationError если версия неверная
+     */
+    static validateOnecVersion(version) {
+        if (!version) {
+            throw new base_errors_1.ValidationError('OneC version is required when type is "onec"');
+        }
+        // Проверяем формат версии 1С (например, 8.3.20.1549)
+        const versionPattern = /^8\.3\.\d+\.\d+$/;
+        if (!versionPattern.test(version)) {
+            throw new base_errors_1.ValidationError(`Invalid OneC version format: ${version}. Expected format: 8.3.X.Y`);
+        }
+    }
+    /**
+     * Валидирует булево значение
+     * @param value - значение для валидации
+     * @param name - имя параметра для сообщения об ошибке
+     * @throws ValidationError если значение неверное
+     */
+    static validateBoolean(value, name) {
+        if (value && !['true', 'false'].includes(value.toLowerCase())) {
+            throw new base_errors_1.ValidationError(`Invalid ${name} value: ${value}. Must be 'true' or 'false'`);
+        }
+    }
+    /**
+     * Валидирует учетные данные
+     * @param username - имя пользователя
+     * @param password - пароль
+     * @throws ValidationError если учетные данные неверные
+     */
+    static validateCredentials(username, password) {
+        if (!username || !password) {
+            throw new base_errors_1.ValidationError('ONEC_USERNAME and ONEC_PASSWORD environment variables are required');
+        }
+        if (username.trim().length === 0 || password.trim().length === 0) {
+            throw new base_errors_1.ValidationError('ONEC_USERNAME and ONEC_PASSWORD cannot be empty');
+        }
+    }
+    /**
+     * Валидирует все входные данные
+     * @param inputs - объект с входными данными
+     * @throws ValidationError если данные неверные
+     */
+    static validateAll(inputs) {
+        this.validateType(inputs.type);
+        if (inputs.type === 'edt') {
+            this.validateEdtVersion(inputs.edt_version || constants_1.DEFAULT_EDT_VERSION);
+        }
+        else if (inputs.type === 'onec') {
+            this.validateOnecVersion(inputs.onec_version || constants_1.DEFAULT_ONEC_VERSION);
+        }
+        if (inputs.cache) {
+            this.validateBoolean(inputs.cache, 'cache');
+        }
+        if (inputs.cache_distr) {
+            this.validateBoolean(inputs.cache_distr, 'cache_distr');
+        }
+        // Всегда проверяем учетные данные
+        this.validateCredentials(inputs.username || '', inputs.password || '');
+    }
+}
+exports.InputValidator = InputValidator;
 
 
 /***/ }),
@@ -81407,6 +82564,14 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 6005:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:crypto");
 
 /***/ }),
 
@@ -92322,6 +93487,64 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/create fake namespace object */
+/******/ 	(() => {
+/******/ 		var getProto = Object.getPrototypeOf ? (obj) => (Object.getPrototypeOf(obj)) : (obj) => (obj.__proto__);
+/******/ 		var leafPrototypes;
+/******/ 		// create a fake namespace object
+/******/ 		// mode & 1: value is a module id, require it
+/******/ 		// mode & 2: merge all properties of value into the ns
+/******/ 		// mode & 4: return value when already ns object
+/******/ 		// mode & 16: return value when it's Promise-like
+/******/ 		// mode & 8|1: behave like require
+/******/ 		__nccwpck_require__.t = function(value, mode) {
+/******/ 			if(mode & 1) value = this(value);
+/******/ 			if(mode & 8) return value;
+/******/ 			if(typeof value === 'object' && value) {
+/******/ 				if((mode & 4) && value.__esModule) return value;
+/******/ 				if((mode & 16) && typeof value.then === 'function') return value;
+/******/ 			}
+/******/ 			var ns = Object.create(null);
+/******/ 			__nccwpck_require__.r(ns);
+/******/ 			var def = {};
+/******/ 			leafPrototypes = leafPrototypes || [null, getProto({}), getProto([]), getProto(getProto)];
+/******/ 			for(var current = mode & 2 && value; typeof current == 'object' && !~leafPrototypes.indexOf(current); current = getProto(current)) {
+/******/ 				Object.getOwnPropertyNames(current).forEach((key) => (def[key] = () => (value[key])));
+/******/ 			}
+/******/ 			def['default'] = () => (value);
+/******/ 			__nccwpck_require__.d(ns, def);
+/******/ 			return ns;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__nccwpck_require__.nmd = (module) => {
