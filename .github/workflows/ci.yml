@@ -43,6 +43,11 @@ jobs:
         id: npm-unit-test
         run: npm run test:unit
 
+      - name: Setup 7z
+        id: setup-7z
+        run: |
+          sudo apt-get -y install p7zip-full p7zip-rar
+
       - name: Integration Tests
         id: npm-integration-test
         run: npm run test:integration
