@@ -81126,7 +81126,16 @@ class Client {
             response.body.on('error', reject);
             destination.on('finish', resolve);
         });
-        core.info('Downloaded');
+        // Проверяем размер файла
+        const stats = fs.statSync(fullFileName);
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && stats.size !== parseInt(contentLength)) {
+            core.warning(`File size mismatch: expected ${contentLength}, got ${stats.size}`);
+            // Удаляем поврежденный файл
+            fs.unlinkSync(fullFileName);
+            throw new Error(`Downloaded file is corrupted: size mismatch`);
+        }
+        core.info(`Downloaded (${stats.size} bytes)`);
         return fullFileName;
     }
     async projectPage(project) {
@@ -82000,15 +82009,20 @@ exports.unpackFiles = unpackFiles;
 const tc = __importStar(__nccwpck_require__(7784));
 const exec_1 = __nccwpck_require__(1514);
 const core = __importStar(__nccwpck_require__(2186));
+const io = __importStar(__nccwpck_require__(7436));
 async function unpack(file, destination) {
     core.info(`Unpack ${file} to ${destination}`);
+    // Убеждаемся, что директория назначения существует
+    await io.mkdirP(destination);
     if (file.endsWith('.zip')) {
         await tc.extractZip(file, destination);
     }
     else if (file.endsWith('.tar') || file.endsWith('.tar.gz')) {
-        await tc.extractTar(file, destination);
+        // Используем системный tar для лучшего контроля
+        await (0, exec_1.exec)('tar', ['xz', '--warning=no-unknown-keyword', '--overwrite', '-C', destination, '-f', file]);
     }
     else if (file.endsWith('.rar')) {
+        // 7z может завершиться с ошибкой, но частично распаковать файлы
         await (0, exec_1.exec)('7z', ['x', file, `-o${destination}`, '-y']);
     }
     else {

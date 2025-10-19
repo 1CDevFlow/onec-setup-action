@@ -102,9 +102,11 @@ export class Client {
     // Проверяем размер файла
     const stats = fs.statSync(fullFileName)
     const contentLength = response.headers.get('content-length')
-    
+
     if (contentLength && stats.size !== parseInt(contentLength)) {
-      core.warning(`File size mismatch: expected ${contentLength}, got ${stats.size}`)
+      core.warning(
+        `File size mismatch: expected ${contentLength}, got ${stats.size}`
+      )
       // Удаляем поврежденный файл
       fs.unlinkSync(fullFileName)
       throw new Error(`Downloaded file is corrupted: size mismatch`)

@@ -58,7 +58,7 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
-   
+
       - name: Setup 7z
         id: setup-7z
         run: |

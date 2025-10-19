@@ -12,7 +12,9 @@ describe('Simple Integration Tests', () => {
   const shouldSkip = !login || !password
 
   if (shouldSkip) {
-    console.log('Skipping simple integration tests: ONEC_USERNAME and ONEC_PASSWORD not set')
+    console.log(
+      'Skipping simple integration tests: ONEC_USERNAME and ONEC_PASSWORD not set'
+    )
   }
 
   it(
