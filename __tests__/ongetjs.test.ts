@@ -5,14 +5,16 @@ const TIMEOUT = 500000
 
 describe('onegetjs', () => {
   config()
-  
+
   // Проверяем наличие учетных данных
   const login = process.env.ONEC_USERNAME ?? ''
   const password = process.env.ONEC_PASSWORD ?? ''
   const shouldSkip = !login || !password
-  
+
   if (shouldSkip) {
-    console.log('Skipping onegetjs integration tests: ONEC_USERNAME and ONEC_PASSWORD not set')
+    console.log(
+      'Skipping onegetjs integration tests: ONEC_USERNAME and ONEC_PASSWORD not set'
+    )
   }
   // const client = new OneGet('/tmp/oneget')
   //
@@ -45,7 +47,7 @@ describe('onegetjs', () => {
         console.log('Skipping downloadRelease test: credentials not available')
         return
       }
-      
+
       await downloadRelease(
         {
           project: 'Platform83',
@@ -65,10 +67,12 @@ describe('onegetjs', () => {
     'downloadRelease EDT',
     async () => {
       if (shouldSkip) {
-        console.log('Skipping downloadRelease EDT test: credentials not available')
+        console.log(
+          'Skipping downloadRelease EDT test: credentials not available'
+        )
         return
       }
-      
+
       await downloadRelease(
         {
           project: 'DevelopmentTools10',

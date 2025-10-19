@@ -34,16 +34,18 @@ function configureInput(input: Input): void {
 
 describe('action', () => {
   dotenv.config()
-  
+
   // Проверяем наличие учетных данных
   const login = process.env.ONEC_USERNAME ?? ''
   const password = process.env.ONEC_PASSWORD ?? ''
   const shouldSkip = !login || !password
-  
+
   if (shouldSkip) {
-    console.log('Skipping installer integration tests: ONEC_USERNAME and ONEC_PASSWORD not set')
+    console.log(
+      'Skipping installer integration tests: ONEC_USERNAME and ONEC_PASSWORD not set'
+    )
   }
-  
+
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -55,7 +57,7 @@ describe('action', () => {
         console.log('Skipping Download EDT test: credentials not available')
         return
       }
-      
+
       const input: Input = {
         type: 'edt',
         edt_version: '2023.1.2',
@@ -74,10 +76,12 @@ describe('action', () => {
     'Install 1C:Enterprise v. 8.3.14.2095',
     async () => {
       if (shouldSkip) {
-        console.log('Skipping Install 1C:Enterprise v. 8.3.14.2095 test: credentials not available')
+        console.log(
+          'Skipping Install 1C:Enterprise v. 8.3.14.2095 test: credentials not available'
+        )
         return
       }
-      
+
       const input: Input = {
         type: 'onec',
         onec_version: '8.3.14.2095'
@@ -94,10 +98,12 @@ describe('action', () => {
     'Install 1C:Enterprise v. 8.3.10.2580',
     async () => {
       if (shouldSkip) {
-        console.log('Skipping Install 1C:Enterprise v. 8.3.10.2580 test: credentials not available')
+        console.log(
+          'Skipping Install 1C:Enterprise v. 8.3.10.2580 test: credentials not available'
+        )
         return
       }
-      
+
       const input: Input = {
         type: 'onec',
         onec_version: '8.3.10.2580'
