@@ -18,6 +18,9 @@ export class PlatformDetector implements IPlatformDetector {
 
   /**
    * Определяет тип платформы
+   * 
+   * @param platform - строка платформы
+   * @returns тип платформы, по умолчанию 'linux' для неизвестных платформ
    */
   getPlatformType(platform: string): 'win' | 'linux' | 'mac' {
     switch (platform) {
@@ -28,7 +31,8 @@ export class PlatformDetector implements IPlatformDetector {
       case PLATFORM_MAC:
         return 'mac'
       default:
-        throw new PlatformError(`Unrecognized os ${platform}`)
+        // По умолчанию возвращаем Linux для неизвестных платформ
+        return 'linux'
     }
   }
 

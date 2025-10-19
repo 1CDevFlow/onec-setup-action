@@ -12,35 +12,12 @@ export class InputValidator {
   constructor() {
     // Пустой конструктор для совместимости с интерфейсом
   }
-
-  /**
-   * Методы экземпляра для совместимости с интерфейсом IInputValidator
-   */
-  validateAll(inputs: ActionInputs): void {
-    InputValidator.validateAll(inputs)
-  }
-
-  validateType(type: string): void {
-    InputValidator.validateType(type)
-  }
-
-  validateEdtVersion(version: string): void {
-    InputValidator.validateEdtVersion(version)
-  }
-
-  validateOnecVersion(version: string): void {
-    InputValidator.validateOnecVersion(version)
-  }
-
-  validateCredentials(username: string, password: string): void {
-    InputValidator.validateCredentials(username, password)
-  }
   /**
    * Валидирует тип установщика
    * @param type - тип установщика
    * @throws ValidationError если тип неверный
    */
-  static validateType(type: string): void {
+  validateType(type: string): void {
     if (!type) {
       throw new ValidationError('Type is required')
     }
@@ -57,7 +34,7 @@ export class InputValidator {
    * @param version - версия EDT
    * @throws ValidationError если версия неверная
    */
-  static validateEdtVersion(version: string): void {
+  validateEdtVersion(version: string): void {
     if (!version) {
       throw new ValidationError('EDT version is required when type is "edt"')
     }
@@ -76,7 +53,7 @@ export class InputValidator {
    * @param version - версия 1С:Предприятие
    * @throws ValidationError если версия неверная
    */
-  static validateOnecVersion(version: string): void {
+  validateOnecVersion(version: string): void {
     if (!version) {
       throw new ValidationError('OneC version is required when type is "onec"')
     }
@@ -96,7 +73,7 @@ export class InputValidator {
    * @param name - имя параметра для сообщения об ошибке
    * @throws ValidationError если значение неверное
    */
-  static validateBoolean(value: string, name: string): void {
+  validateBoolean(value: string, name: string): void {
     if (value && !['true', 'false'].includes(value.toLowerCase())) {
       throw new ValidationError(
         `Invalid ${name} value: ${value}. Must be 'true' or 'false'`
@@ -110,7 +87,7 @@ export class InputValidator {
    * @param password - пароль
    * @throws ValidationError если учетные данные неверные
    */
-  static validateCredentials(username: string, password: string): void {
+  validateCredentials(username: string, password: string): void {
     if (!username || !password) {
       throw new ValidationError(
         'ONEC_USERNAME and ONEC_PASSWORD environment variables are required'
@@ -129,7 +106,7 @@ export class InputValidator {
    * @param inputs - объект с входными данными
    * @throws ValidationError если данные неверные
    */
-  static validateAll(inputs: ActionInputs): void {
+  validateAll(inputs: ActionInputs): void {
     this.validateType(inputs.type)
 
     if (inputs.type === 'edt') {

@@ -14,12 +14,38 @@ import { Logger } from '../utils/logger'
 import { ValidationError } from '../errors/base-errors'
 
 /**
- * Сервис для управления процессом установки
+ * Сервис для управления процессом установки 1C:Enterprise или 1C:EDT
+ * 
+ * Этот сервис координирует весь процесс установки, включая:
+ * - Валидацию входных параметров
+ * - Создание соответствующего инсталлятора
+ * - Управление кешированием
+ * - Обработку ошибок
+ * 
+ * @example
+ * ```typescript
+ * const service = new InstallationService(logger)
+ * await service.install({
+ *   type: 'edt',
+ *   version: '2024.2.6',
+ *   platform: 'linux',
+ *   useCache: true,
+ *   useCacheDistr: false,
+ *   username: 'user',
+ *   password: 'pass'
+ * })
+ * ```
  */
 export class InstallationService {
   private logger: ILogger
   private inputValidator: IInputValidator
 
+  /**
+   * Создает экземпляр InstallationService
+   * 
+   * @param logger - Логгер для записи сообщений (по умолчанию создается новый Logger)
+   * @param inputValidator - Валидатор входных данных (по умолчанию создается новый InputValidator)
+   */
   constructor(logger?: ILogger, inputValidator?: IInputValidator) {
     this.logger = logger || new Logger()
     this.inputValidator = inputValidator || new InputValidator()
@@ -27,6 +53,10 @@ export class InstallationService {
 
   /**
    * Выполняет установку на основе конфигурации
+   * 
+   * @param config - Конфигурация установки
+   * @throws {ValidationError} При неверных входных параметрах
+   * @throws {Error} При ошибках создания инсталлятора или установки
    */
   async install(config: InstallationConfig): Promise<void> {
     try {
@@ -62,7 +92,11 @@ export class InstallationService {
   }
 
   /**
-   * Выполняет процесс установки
+   * Выполняет процесс установки с учетом кеширования
+   * 
+   * @param installer - Инсталлятор для выполнения установки
+   * @param config - Конфигурация установки
+   * @private
    */
   private async performInstallation(
     installer: IInstaller,

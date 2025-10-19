@@ -1,21 +1,25 @@
 {
-  "name": "typescript-action",
-  "description": "GitHub Actions TypeScript template",
-  "version": "0.0.0",
-  "author": "",
+  "name": "onec-setup-action",
+  "description": "GitHub Action для установки 1C:Enterprise и 1C:EDT",
+  "version": "1.0.0",
+  "author": "1CDevFlow",
   "private": true,
-  "homepage": "https://github.com/actions/typescript-action",
+  "homepage": "https://github.com/1CDevFlow/onec-setup-action",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/1CDevFlow/onec-setup-action.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/typescript-action/issues"
+    "url": "https://github.com/1CDevFlow/onec-setup-action/issues"
   },
   "keywords": [
     "actions",
     "node",
-    "setup"
+    "setup",
+    "1c",
+    "enterprise",
+    "edt",
+    "onec"
   ],
   "exports": {
     ".": "./dist/index.js"

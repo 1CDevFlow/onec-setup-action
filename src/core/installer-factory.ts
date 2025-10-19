@@ -20,20 +20,42 @@ import { ValidationError } from '../errors/base-errors'
  * Конфигурация для создания инсталлятора
  */
 export interface InstallerConfig {
+  /** Тип устанавливаемого продукта */
   type: 'edt' | 'onec'
+  /** Версия продукта для установки */
   version: string
+  /** Платформа операционной системы */
   platform: string
+  /** Менеджер кеша (опционально) */
   cacheManager?: ICacheManager
+  /** Детектор платформы (опционально) */
   platformDetector?: IPlatformDetector
+  /** Логгер (опционально) */
   logger?: ILogger
 }
 
 /**
- * Фабрика для создания инсталляторов
+ * Фабрика для создания инсталляторов 1C:Enterprise и 1C:EDT
+ * 
+ * Использует паттерн Factory для создания соответствующих инсталляторов
+ * на основе типа продукта и платформы.
+ * 
+ * @example
+ * ```typescript
+ * const installer = await InstallerFactory.createInstaller({
+ *   type: 'edt',
+ *   version: '2024.2.6',
+ *   platform: 'linux'
+ * })
+ * ```
  */
 export class InstallerFactory {
   /**
    * Создает инсталлятор на основе конфигурации
+   * 
+   * @param config - Конфигурация для создания инсталлятора
+   * @returns Promise с созданным инсталлятором
+   * @throws {ValidationError} При неподдерживаемом типе инсталлятора
    */
   static async createInstaller(config: InstallerConfig): Promise<IInstaller> {
     const logger = config.logger || new Logger()
@@ -74,7 +96,7 @@ export class InstallerFactory {
     logger: ILogger
   ): Promise<IInstaller> {
     // Динамически импортируем EDT класс для избежания циклических зависимостей
-    await import('../tools/edt')
+    const { EDT } = await import('../tools/edt')
 
     // Создаем EDT инсталлятор с новой архитектурой
     return new EDTInstaller(
@@ -82,7 +104,8 @@ export class InstallerFactory {
       config.platform,
       cacheManager,
       pathManager,
-      logger
+      logger,
+      EDT
     )
   }
 
@@ -96,7 +119,7 @@ export class InstallerFactory {
     logger: ILogger
   ): Promise<IInstaller> {
     // Динамически импортируем Platform83 класс
-    await import('../tools/platform83')
+    const { Platform83 } = await import('../tools/platform83')
 
     // Создаем OneC инсталлятор с новой архитектурой
     return new OnecInstaller(
@@ -104,7 +127,8 @@ export class InstallerFactory {
       config.platform,
       cacheManager,
       pathManager,
-      logger
+      logger,
+      Platform83
     )
   }
 }
@@ -121,12 +145,12 @@ class EDTInstaller extends BaseInstaller {
     public readonly platform: string,
     cacheManager: ICacheManager,
     pathManager: IPathManager,
-    logger: ILogger
+    logger: ILogger,
+    EDTClass: any
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный EDT инсталлятор
-    const { EDT } = require('../tools/edt')
-    this.edtInstaller = new EDT(version, platform)
+    this.edtInstaller = new EDTClass(version, platform)
   }
 
   async download(): Promise<void> {
@@ -150,12 +174,12 @@ class OnecInstaller extends BaseInstaller {
     public readonly platform: string,
     cacheManager: ICacheManager,
     pathManager: IPathManager,
-    logger: ILogger
+    logger: ILogger,
+    Platform83Class: any
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный Platform83 инсталлятор
-    const { Platform83 } = require('../tools/platform83')
-    this.onecInstaller = new Platform83(version, platform)
+    this.onecInstaller = new Platform83Class(version, platform)
   }
 
   async download(): Promise<void> {
