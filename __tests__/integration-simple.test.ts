@@ -29,7 +29,7 @@ describe('Simple Integration Tests', () => {
       await downloadRelease(
         {
           project: 'DevelopmentTools10',
-          version: '2023.1.2',
+          version: '2024.2.6',
           osName: 'linux',
           offline: true
         },
@@ -52,7 +52,7 @@ describe('Simple Integration Tests', () => {
       await downloadRelease(
         {
           project: 'Platform83',
-          version: '8.3.10.2580',
+          version: '8.3.27.1537',
           osName: 'win',
           architecture: 'x64',
           type: 'full'

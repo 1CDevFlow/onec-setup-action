@@ -76,7 +76,7 @@ describe('onegetjs', () => {
       await downloadRelease(
         {
           project: 'DevelopmentTools10',
-          version: '2023.1.2',
+          version: '2024.2.6',
           osName: 'linux',
           offline: true
         },

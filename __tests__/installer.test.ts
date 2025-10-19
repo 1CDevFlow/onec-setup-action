@@ -60,7 +60,7 @@ describe('action', () => {
 
       const input: Input = {
         type: 'edt',
-        edt_version: '2023.1.2',
+        edt_version: '2024.2.6',
         offline: 'true'
       }
 
