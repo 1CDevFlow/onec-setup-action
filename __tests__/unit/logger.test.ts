@@ -24,7 +24,7 @@ describe('Logger', () => {
     })
 
     it('should mask tokens in messages', () => {
-      const message = 'Using token='
+      const message = 'Using token=*'
       Logger.info(message)
 
       expect(core.info).toHaveBeenCalledWith('Using token=***')
