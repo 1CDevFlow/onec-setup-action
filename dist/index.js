@@ -82019,7 +82019,15 @@ async function unpack(file, destination) {
     }
     else if (file.endsWith('.tar') || file.endsWith('.tar.gz')) {
         // Используем системный tar для лучшего контроля
-        await (0, exec_1.exec)('tar', ['xz', '--warning=no-unknown-keyword', '--overwrite', '-C', destination, '-f', file]);
+        await (0, exec_1.exec)('tar', [
+            'xz',
+            '--warning=no-unknown-keyword',
+            '--overwrite',
+            '-C',
+            destination,
+            '-f',
+            file
+        ]);
     }
     else if (file.endsWith('.rar')) {
         // 7z может завершиться с ошибкой, но частично распаковать файлы
