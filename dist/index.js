@@ -80950,7 +80950,30 @@ const logger_1 = __nccwpck_require__(8836);
 const installation_service_1 = __nccwpck_require__(8926);
 const constants_1 = __nccwpck_require__(8593);
 /**
- * Основная функция запуска установки
+ * Основная функция запуска установки 1C:Enterprise или 1C:EDT
+ *
+ * Эта функция является точкой входа для GitHub Action и выполняет:
+ * 1. Получение входных параметров из GitHub Actions
+ * 2. Валидацию входных данных
+ * 3. Создание конфигурации установки
+ * 4. Запуск процесса установки через InstallationService
+ *
+ * @throws {ValidationError} При неверных входных параметрах
+ * @throws {AuthenticationError} При отсутствии учетных данных
+ * @throws {DownloadError} При ошибках загрузки дистрибутивов
+ * @throws {InstallationError} При ошибках установки
+ *
+ * @example
+ * ```yaml
+ * - uses: actions/checkout@v4
+ * - uses: your-org/onec-setup-action@v1
+ *   with:
+ *     type: 'edt'
+ *     edt_version: '2024.2.6'
+ *   env:
+ *     ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+ *     ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+ * ```
  */
 async function run() {
     const logger = new logger_1.Logger();
@@ -81121,16 +81144,25 @@ class Client {
         }
         core.info(`Downloading ${fileName}...`);
         const destination = fs.createWriteStream(fullFileName, { flags: 'wx' });
+        const contentLength = response.headers.get('content-length');
+        const totalSize = contentLength ? parseInt(contentLength) : 0;
+        let downloadedSize = 0;
         await new Promise((resolve, reject) => {
+            response.body.on('data', (chunk) => {
+                downloadedSize += chunk.length;
+                if (totalSize > 0 && downloadedSize % (1024 * 1024) === 0) { // Каждые MB
+                    const progress = Math.round((downloadedSize / totalSize) * 100);
+                    core.info(`Download progress: ${progress}% (${Math.round(downloadedSize / 1024 / 1024)}MB / ${Math.round(totalSize / 1024 / 1024)}MB)`);
+                }
+            });
             response.body.pipe(destination);
             response.body.on('error', reject);
             destination.on('finish', resolve);
         });
         // Проверяем размер файла
         const stats = fs.statSync(fullFileName);
-        const contentLength = response.headers.get('content-length');
-        if (contentLength && stats.size !== parseInt(contentLength)) {
-            core.warning(`File size mismatch: expected ${contentLength}, got ${stats.size}`);
+        if (totalSize > 0 && stats.size !== totalSize) {
+            core.warning(`File size mismatch: expected ${totalSize}, got ${stats.size}`);
             // Удаляем поврежденный файл
             fs.unlinkSync(fullFileName);
             throw new Error(`Downloaded file is corrupted: size mismatch`);

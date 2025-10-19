@@ -93,7 +93,20 @@ export class Client {
     core.info(`Downloading ${fileName}...`)
 
     const destination = fs.createWriteStream(fullFileName, { flags: 'wx' })
+    const contentLength = response.headers.get('content-length')
+    const totalSize = contentLength ? parseInt(contentLength) : 0
+    
+    let downloadedSize = 0
+    
     await new Promise((resolve, reject) => {
+      response.body.on('data', (chunk) => {
+        downloadedSize += chunk.length
+        if (totalSize > 0 && downloadedSize % (1024 * 1024) === 0) { // Каждые MB
+          const progress = Math.round((downloadedSize / totalSize) * 100)
+          core.info(`Download progress: ${progress}% (${Math.round(downloadedSize / 1024 / 1024)}MB / ${Math.round(totalSize / 1024 / 1024)}MB)`)
+        }
+      })
+      
       response.body.pipe(destination)
       response.body.on('error', reject)
       destination.on('finish', resolve)
@@ -101,11 +114,10 @@ export class Client {
 
     // Проверяем размер файла
     const stats = fs.statSync(fullFileName)
-    const contentLength = response.headers.get('content-length')
 
-    if (contentLength && stats.size !== parseInt(contentLength)) {
+    if (totalSize > 0 && stats.size !== totalSize) {
       core.warning(
-        `File size mismatch: expected ${contentLength}, got ${stats.size}`
+        `File size mismatch: expected ${totalSize}, got ${stats.size}`
       )
       // Удаляем поврежденный файл
       fs.unlinkSync(fullFileName)

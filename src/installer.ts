@@ -6,7 +6,30 @@ import { InstallationConfig } from './core/interfaces'
 import { DEFAULT_EDT_VERSION, DEFAULT_ONEC_VERSION } from './utils/constants'
 
 /**
- * Основная функция запуска установки
+ * Основная функция запуска установки 1C:Enterprise или 1C:EDT
+ * 
+ * Эта функция является точкой входа для GitHub Action и выполняет:
+ * 1. Получение входных параметров из GitHub Actions
+ * 2. Валидацию входных данных
+ * 3. Создание конфигурации установки
+ * 4. Запуск процесса установки через InstallationService
+ * 
+ * @throws {ValidationError} При неверных входных параметрах
+ * @throws {AuthenticationError} При отсутствии учетных данных
+ * @throws {DownloadError} При ошибках загрузки дистрибутивов
+ * @throws {InstallationError} При ошибках установки
+ * 
+ * @example
+ * ```yaml
+ * - uses: actions/checkout@v4
+ * - uses: your-org/onec-setup-action@v1
+ *   with:
+ *     type: 'edt'
+ *     edt_version: '2024.2.6'
+ *   env:
+ *     ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+ *     ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+ * ```
  */
 export async function run(): Promise<void> {
   const logger = new Logger()

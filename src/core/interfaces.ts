@@ -214,14 +214,21 @@ export interface ActionInputs {
 }
 
 /**
- * Конфигурация установки
+ * Конфигурация установки 1C:Enterprise или 1C:EDT
  */
 export interface InstallationConfig {
+  /** Тип устанавливаемого продукта */
   type: 'edt' | 'onec'
+  /** Версия продукта для установки */
   version: string
+  /** Платформа операционной системы */
   platform: string
+  /** Использовать кеш для установленных компонентов */
   useCache: boolean
+  /** Использовать кеш для дистрибутивов */
   useCacheDistr: boolean
+  /** Имя пользователя для аутентификации на releases.1c.ru */
   username: string
+  /** Пароль для аутентификации на releases.1c.ru */
   password: string
 }

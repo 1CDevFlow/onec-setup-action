@@ -1,4 +1,4 @@
-# Действие GitHub Action для установки `1С:Предприятие` и `1C:EDT`
+# GitHub Action для установки 1С:Предприятие и 1C:EDT
 
 [![GitHub Super-Linter](https://github.com/1CDevFlow/onec-setup-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/1CDevFlow/onec-setup-action/actions/workflows/ci.yml/badge.svg)
@@ -6,18 +6,43 @@
 [![CodeQL](https://github.com/1CDevFlow/onec-setup-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/1CDevFlow/onec-setup-action/actions/workflows/codeql-analysis.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
-## Использование
+## Описание
 
-Действие позволяет устанавливать 1С:Предприятие и 1C:EDT для использования в
-ваших рабочих процессах (workflows).
+Этот GitHub Action автоматизирует установку продуктов 1С:Предприятие и 1C:EDT в CI/CD пайплайнах. Action поддерживает кеширование для ускорения повторных установок и работает на Windows и Linux.
 
-Позволяет:
+## Возможности
 
-- Скачивание дистрибутивов с `https://releases.1c.ru`, необходимо указать
-  учетные данные
-- Установка в Windows и Linux
-- Кеширование скаченных дистрибутивов
-- Кеширование инсталляции
+- ✅ **Автоматическая загрузка** дистрибутивов с официального сайта releases.1c.ru
+- ✅ **Поддержка платформ**: Windows (x64), Linux (x64), macOS
+- ✅ **Кеширование**: установленных компонентов и дистрибутивов
+- ✅ **Безопасность**: маскирование чувствительных данных в логах
+- ✅ **Валидация**: проверка входных параметров и целостности файлов
+- ✅ **Обработка ошибок**: детальная диагностика проблем установки
+
+## Требования
+
+- Node.js 20.x или выше
+- Учетные данные для доступа к releases.1c.ru
+- Поддерживаемые ОС: Ubuntu, Windows Server, macOS (частично)
+
+## Параметры
+
+| Параметр | Обязательный | Описание | По умолчанию |
+|----------|--------------|----------|--------------|
+| `type` | ✅ | Тип устанавливаемого продукта: `edt` или `onec` | - |
+| `edt_version` | ❌ | Версия 1C:EDT для установки | `2024.2.6` |
+| `onec_version` | ❌ | Версия 1С:Предприятие для установки | `8.3.20.1549` |
+| `cache` | ❌ | Использовать кеш для установленных компонентов | `true` |
+| `cache_distr` | ❌ | Использовать кеш для дистрибутивов | `false` |
+
+## Переменные окружения
+
+| Переменная | Обязательная | Описание |
+|------------|--------------|----------|
+| `ONEC_USERNAME` | ✅ | Имя пользователя для releases.1c.ru |
+| `ONEC_PASSWORD` | ✅ | Пароль для releases.1c.ru |
+
+## Примеры использования
 
 ### Установка 1С:Предприятие
 
@@ -56,69 +81,33 @@ jobs:
         timeout-minutes: 30
 ```
 
-## Contributing
+## Устранение неполадок
 
-After you've cloned the repository to your local machine or codespace, you'll
-need to perform some initial setup steps before you can develop your action.
+### Частые проблемы
 
-> [!NOTE]
->
-> You'll need to have a reasonably modern version of
-> [Node.js](https://nodejs.org) handy (20.x or later should work!). If you are
-> using a version manager like [`nodenv`](https://github.com/nodenv/nodenv) or
-> [`nvm`](https://github.com/nvm-sh/nvm), this template has a `.node-version`
-> file at the root of the repository that will be used to automatically switch
-> to the correct version when you `cd` into the repository. Additionally, this
-> `.node-version` file is used by GitHub Actions in any `actions/setup-node`
-> actions.
-
-1. :hammer_and_wrench: Install the dependencies
-
-   ```bash
-   npm install
-   ```
-
-1. :building_construction: Package the TypeScript for distribution
-
-   ```bash
-   npm run bundle
-   ```
-
-1. :white_check_mark: Run the tests
-
-   ```bash
-   $ npm test
-
-   PASS  ./index.test.js
-     ✓ throws invalid number (3ms)
-     ✓ wait 500 ms (504ms)
-     ✓ test runs (95ms)
-
-   ...
-   ```
-
-## Validate the Action
-
-You can now validate the action by referencing it in a workflow file. For
-example, [`ci.yml`](./.github/workflows/ci.yml) demonstrates how to reference an
-action in the same repository.
-
-```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Test Local Action
-    id: test-action
-    uses: ./
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
+**Ошибка аутентификации:**
 ```
+Authentication failed. Please check ONEC_USERNAME and ONEC_PASSWORD.
+```
+- Убедитесь, что учетные данные корректны
+- Проверьте, что переменные окружения установлены правильно
 
-For example workflow runs, check out the
-[Actions tab](https://github.com/1CDevFlow/onec-setup-action/actions)! :rocket:
+**Ошибка установки:**
+```
+The process '/usr/bin/sudo' failed with exit code 1
+```
+- На Linux runner'ах может потребоваться настройка sudo без пароля
+- Используйте `runs-on: ubuntu-latest` для стандартных настроек
+
+### Логирование
+
+Action автоматически маскирует чувствительные данные в логах:
+- Пароли и токены заменяются на `***`
+- URL с учетными данными обрезаются
+
+### Производительность
+
+- Используйте `cache: true` для ускорения повторных установок
+- `cache_distr: true` кеширует дистрибутивы
+- Первая установка может занять 10-30 минут в зависимости от размера дистрибутива
+
