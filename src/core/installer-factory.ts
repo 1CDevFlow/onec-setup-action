@@ -74,7 +74,7 @@ export class InstallerFactory {
     logger: ILogger
   ): Promise<IInstaller> {
     // Динамически импортируем EDT класс для избежания циклических зависимостей
-    const { EDT } = await import('../tools/edt')
+    await import('../tools/edt')
 
     // Создаем EDT инсталлятор с новой архитектурой
     return new EDTInstaller(
@@ -96,7 +96,7 @@ export class InstallerFactory {
     logger: ILogger
   ): Promise<IInstaller> {
     // Динамически импортируем Platform83 класс
-    const { Platform83 } = await import('../tools/platform83')
+    await import('../tools/platform83')
 
     // Создаем OneC инсталлятор с новой архитектурой
     return new OnecInstaller(

@@ -1,7 +1,4 @@
 import { OnecTool } from '../../src/tools/onecTool'
-import { mockCore } from '../mocks/actions-core.mock'
-import { mockCache } from '../mocks/actions-cache.mock'
-import { mockExec } from '../mocks/actions-exec.mock'
 
 // Импортируем моки
 import '../mocks/actions-core.mock'

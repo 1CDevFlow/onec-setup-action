@@ -1,5 +1,4 @@
 import { run } from '../../src/installer'
-import { mockCore } from '../mocks/actions-core.mock'
 import { ValidationError } from '../../src/errors/base-errors'
 
 // Импортируем моки
@@ -74,9 +73,6 @@ describe('installer', () => {
 
   describe('EDT installation', () => {
     it('should install EDT with default version', async () => {
-      const {
-        InstallationService
-      } = require('../../src/core/installation-service')
 
       mockCore.getInput.mockImplementation((name: string) => {
         switch (name) {

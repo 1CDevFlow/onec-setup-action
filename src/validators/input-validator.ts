@@ -15,7 +15,7 @@ export class InputValidator {
   /**
    * Методы экземпляра для совместимости с интерфейсом IInputValidator
    */
-  validateAll(inputs: any): void {
+  validateAll(inputs: Record<string, string | undefined>): void {
     InputValidator.validateAll(inputs)
   }
 

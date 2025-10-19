@@ -8,7 +8,7 @@ describe('filter.ts', () => {
       type: 'full'
     })
     const result = filter.filter(fixtures, filters)
-    expect(result.length).toEqual(1)
+    expect(result).toHaveLength(1)
     expect(result[0].name).toContain(
       'Технологическая платформа 1С:Предприятия для Windows'
     )
@@ -31,7 +31,7 @@ describe('filter.ts', () => {
       type: 'full'
     })
     const result1 = filter.filter(files, filters)
-    expect(result1.length).toEqual(1)
+    expect(result1).toHaveLength(1)
 
     filters = filter.getFilters({
       osName: 'win',
@@ -39,7 +39,7 @@ describe('filter.ts', () => {
       type: 'full'
     })
     const result2 = filter.filter(files, filters)
-    expect(result2.length).toEqual(1)
+    expect(result2).toHaveLength(1)
     expect(result1[0]).not.toEqual(result2[0])
   })
   it('Linux (deb) 64 client', async () => {

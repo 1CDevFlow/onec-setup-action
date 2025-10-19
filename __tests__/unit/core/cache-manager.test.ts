@@ -4,7 +4,6 @@
 
 import { CacheManager } from '../../../src/core/cache-manager'
 import { Logger } from '../../../src/utils/logger'
-import { mockCore } from '../../mocks/actions-core.mock'
 
 // Мокаем @actions/cache
 jest.mock('@actions/cache', () => ({
@@ -37,7 +36,6 @@ describe('CacheManager', () => {
 
     // Получаем моки после импорта
     const cache = require('@actions/cache')
-    const core = require('@actions/core')
     mockRestoreCache = cache.restoreCache
     mockSaveCache = cache.saveCache
     mockIsFeatureAvailable = cache.isFeatureAvailable
