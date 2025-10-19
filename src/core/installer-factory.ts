@@ -36,10 +36,10 @@ export interface InstallerConfig {
 
 /**
  * Фабрика для создания инсталляторов 1C:Enterprise и 1C:EDT
- * 
+ *
  * Использует паттерн Factory для создания соответствующих инсталляторов
  * на основе типа продукта и платформы.
- * 
+ *
  * @example
  * ```typescript
  * const installer = await InstallerFactory.createInstaller({
@@ -52,7 +52,7 @@ export interface InstallerConfig {
 export class InstallerFactory {
   /**
    * Создает инсталлятор на основе конфигурации
-   * 
+   *
    * @param config - Конфигурация для создания инсталлятора
    * @returns Promise с созданным инсталлятором
    * @throws {ValidationError} При неподдерживаемом типе инсталлятора
@@ -138,7 +138,7 @@ export class InstallerFactory {
  */
 class EDTInstaller extends BaseInstaller {
   readonly INSTALLED_CACHE_PRIMARY_KEY = 'edt'
-  private edtInstaller: any
+  private edtInstaller: { download(): Promise<void>; install(): Promise<void> }
 
   constructor(
     public readonly version: string,
@@ -146,7 +146,7 @@ class EDTInstaller extends BaseInstaller {
     cacheManager: ICacheManager,
     pathManager: IPathManager,
     logger: ILogger,
-    EDTClass: any
+    EDTClass: new (version: string, platform: string) => { download(): Promise<void>; install(): Promise<void> }
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный EDT инсталлятор
@@ -167,7 +167,7 @@ class EDTInstaller extends BaseInstaller {
  */
 class OnecInstaller extends BaseInstaller {
   readonly INSTALLED_CACHE_PRIMARY_KEY = 'onec'
-  private onecInstaller: any
+  private onecInstaller: { download(): Promise<void>; install(): Promise<void> }
 
   constructor(
     public readonly version: string,
@@ -175,7 +175,7 @@ class OnecInstaller extends BaseInstaller {
     cacheManager: ICacheManager,
     pathManager: IPathManager,
     logger: ILogger,
-    Platform83Class: any
+    Platform83Class: new (version: string, platform: string) => { download(): Promise<void>; install(): Promise<void> }
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный Platform83 инсталлятор

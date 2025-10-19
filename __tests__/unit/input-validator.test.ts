@@ -20,9 +20,7 @@ describe('InputValidator', () => {
     })
 
     it('should throw ValidationError for invalid type', () => {
-      expect(() => validator.validateType('invalid')).toThrow(
-        ValidationError
-      )
+      expect(() => validator.validateType('invalid')).toThrow(ValidationError)
       expect(() => validator.validateType('invalid')).toThrow(
         "Invalid type: invalid. Must be 'edt' or 'onec'"
       )
@@ -37,9 +35,7 @@ describe('InputValidator', () => {
     })
 
     it('should throw ValidationError for empty version', () => {
-      expect(() => validator.validateEdtVersion('')).toThrow(
-        ValidationError
-      )
+      expect(() => validator.validateEdtVersion('')).toThrow(ValidationError)
       expect(() => validator.validateEdtVersion('')).toThrow(
         'EDT version is required when type is "edt"'
       )
@@ -63,21 +59,13 @@ describe('InputValidator', () => {
 
   describe('validateOnecVersion', () => {
     it('should accept valid OneC versions', () => {
-      expect(() =>
-        validator.validateOnecVersion('8.3.20.1549')
-      ).not.toThrow()
-      expect(() =>
-        validator.validateOnecVersion('8.3.14.2095')
-      ).not.toThrow()
-      expect(() =>
-        validator.validateOnecVersion('8.3.10.2580')
-      ).not.toThrow()
+      expect(() => validator.validateOnecVersion('8.3.20.1549')).not.toThrow()
+      expect(() => validator.validateOnecVersion('8.3.14.2095')).not.toThrow()
+      expect(() => validator.validateOnecVersion('8.3.10.2580')).not.toThrow()
     })
 
     it('should throw ValidationError for empty version', () => {
-      expect(() => validator.validateOnecVersion('')).toThrow(
-        ValidationError
-      )
+      expect(() => validator.validateOnecVersion('')).toThrow(ValidationError)
       expect(() => validator.validateOnecVersion('')).toThrow(
         'OneC version is required when type is "onec"'
       )
@@ -102,13 +90,9 @@ describe('InputValidator', () => {
   describe('validateBoolean', () => {
     it('should accept valid boolean values', () => {
       expect(() => validator.validateBoolean('true', 'test')).not.toThrow()
-      expect(() =>
-        validator.validateBoolean('false', 'test')
-      ).not.toThrow()
+      expect(() => validator.validateBoolean('false', 'test')).not.toThrow()
       expect(() => validator.validateBoolean('TRUE', 'test')).not.toThrow()
-      expect(() =>
-        validator.validateBoolean('FALSE', 'test')
-      ).not.toThrow()
+      expect(() => validator.validateBoolean('FALSE', 'test')).not.toThrow()
     })
 
     it('should accept empty string', () => {
@@ -133,9 +117,7 @@ describe('InputValidator', () => {
 
   describe('validateCredentials', () => {
     it('should accept valid credentials', () => {
-      expect(() =>
-        validator.validateCredentials('user', 'pass')
-      ).not.toThrow()
+      expect(() => validator.validateCredentials('user', 'pass')).not.toThrow()
       expect(() =>
         validator.validateCredentials('admin', 'secret123')
       ).not.toThrow()

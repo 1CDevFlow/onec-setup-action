@@ -15,13 +15,13 @@ import { ValidationError } from '../errors/base-errors'
 
 /**
  * Сервис для управления процессом установки 1C:Enterprise или 1C:EDT
- * 
+ *
  * Этот сервис координирует весь процесс установки, включая:
  * - Валидацию входных параметров
  * - Создание соответствующего инсталлятора
  * - Управление кешированием
  * - Обработку ошибок
- * 
+ *
  * @example
  * ```typescript
  * const service = new InstallationService(logger)
@@ -42,7 +42,7 @@ export class InstallationService {
 
   /**
    * Создает экземпляр InstallationService
-   * 
+   *
    * @param logger - Логгер для записи сообщений (по умолчанию создается новый Logger)
    * @param inputValidator - Валидатор входных данных (по умолчанию создается новый InputValidator)
    */
@@ -53,7 +53,7 @@ export class InstallationService {
 
   /**
    * Выполняет установку на основе конфигурации
-   * 
+   *
    * @param config - Конфигурация установки
    * @throws {ValidationError} При неверных входных параметрах
    * @throws {Error} При ошибках создания инсталлятора или установки
@@ -93,7 +93,7 @@ export class InstallationService {
 
   /**
    * Выполняет процесс установки с учетом кеширования
-   * 
+   *
    * @param installer - Инсталлятор для выполнения установки
    * @param config - Конфигурация установки
    * @private

@@ -95,18 +95,21 @@ export class Client {
     const destination = fs.createWriteStream(fullFileName, { flags: 'wx' })
     const contentLength = response.headers.get('content-length')
     const totalSize = contentLength ? parseInt(contentLength) : 0
-    
+
     let downloadedSize = 0
-    
+
     await new Promise((resolve, reject) => {
-      response.body.on('data', (chunk) => {
+      response.body.on('data', chunk => {
         downloadedSize += chunk.length
-        if (totalSize > 0 && downloadedSize % (1024 * 1024) === 0) { // Каждые MB
+        if (totalSize > 0 && downloadedSize % (1024 * 1024) === 0) {
+          // Каждые MB
           const progress = Math.round((downloadedSize / totalSize) * 100)
-          core.info(`Download progress: ${progress}% (${Math.round(downloadedSize / 1024 / 1024)}MB / ${Math.round(totalSize / 1024 / 1024)}MB)`)
+          core.info(
+            `Download progress: ${progress}% (${Math.round(downloadedSize / 1024 / 1024)}MB / ${Math.round(totalSize / 1024 / 1024)}MB)`
+          )
         }
       })
-      
+
       response.body.pipe(destination)
       response.body.on('error', reject)
       destination.on('finish', resolve)

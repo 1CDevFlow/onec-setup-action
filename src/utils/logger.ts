@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 
 /**
  * Логгер для GitHub Actions
- * 
+ *
  * GitHub Actions автоматически маскирует секреты, поэтому дополнительное маскирование не требуется
  */
 export class Logger {

@@ -24,7 +24,14 @@ jest.mock('../../../src/validators/input-validator', () => ({
 describe('InstallationService', () => {
   let installationService: InstallationService
   let logger: Logger
-  let mockInstaller: any
+  let mockInstaller: {
+    restoreInstalledTool: jest.Mock
+    restoreInstaller: jest.Mock
+    download: jest.Mock
+    install: jest.Mock
+    saveInstaller: jest.Mock
+    saveInstalledTool: jest.Mock
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()

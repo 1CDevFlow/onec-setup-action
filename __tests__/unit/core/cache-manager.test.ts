@@ -25,7 +25,7 @@ describe('CacheManager', () => {
       warning: jest.fn(),
       error: jest.fn(),
       setFailed: jest.fn()
-    } as any
+    } as jest.Mocked<Logger>
 
     cacheManager = new CacheManager(mockLogger)
   })
@@ -35,14 +35,18 @@ describe('CacheManager', () => {
       const paths = ['/test/path']
       const primaryKey = 'test-key'
       const matchedKey = 'matched-key'
-      
+
       ;(cache.restoreCache as jest.Mock).mockResolvedValue(matchedKey)
       ;(core.setOutput as jest.Mock).mockImplementation(() => {})
 
       const result = await cacheManager.restoreCache(paths, primaryKey)
 
-      expect(cache.restoreCache).toHaveBeenCalledWith(paths, primaryKey, [primaryKey])
-      expect(mockLogger.info).toHaveBeenCalledWith(`Cache restored from key: ${matchedKey}`)
+      expect(cache.restoreCache).toHaveBeenCalledWith(paths, primaryKey, [
+        primaryKey
+      ])
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Cache restored from key: ${matchedKey}`
+      )
       expect(core.setOutput).toHaveBeenCalledWith('cache-hit', true)
       expect(result).toBe(matchedKey)
     })
@@ -50,14 +54,18 @@ describe('CacheManager', () => {
     it('should handle cache miss and set cache-hit output to false', async () => {
       const paths = ['/test/path']
       const primaryKey = 'test-key'
-      
+
       ;(cache.restoreCache as jest.Mock).mockResolvedValue(undefined)
       ;(core.setOutput as jest.Mock).mockImplementation(() => {})
 
       const result = await cacheManager.restoreCache(paths, primaryKey)
 
-      expect(cache.restoreCache).toHaveBeenCalledWith(paths, primaryKey, [primaryKey])
-      expect(mockLogger.info).toHaveBeenCalledWith(`${primaryKey} cache is not found`)
+      expect(cache.restoreCache).toHaveBeenCalledWith(paths, primaryKey, [
+        primaryKey
+      ])
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `${primaryKey} cache is not found`
+      )
       expect(core.setOutput).toHaveBeenCalledWith('cache-hit', false)
       expect(result).toBeUndefined()
     })
@@ -66,13 +74,15 @@ describe('CacheManager', () => {
       const paths = ['/test/path']
       const primaryKey = 'test-key'
       const error = new Error('Cache restore failed')
-      
+
       ;(cache.restoreCache as jest.Mock).mockRejectedValue(error)
       ;(core.setOutput as jest.Mock).mockImplementation(() => {})
 
       const result = await cacheManager.restoreCache(paths, primaryKey)
 
-      expect(mockLogger.warning).toHaveBeenCalledWith('Failed to restore cache: Cache restore failed')
+      expect(mockLogger.warning).toHaveBeenCalledWith(
+        'Failed to restore cache: Cache restore failed'
+      )
       expect(core.setOutput).toHaveBeenCalledWith('cache-hit', false)
       expect(result).toBeUndefined()
     })
@@ -81,13 +91,17 @@ describe('CacheManager', () => {
       const paths = ['/test/path']
       const primaryKey = 'test-key'
       const restoreKeys = ['restore-key-1', 'restore-key-2']
-      
+
       ;(cache.restoreCache as jest.Mock).mockResolvedValue(undefined)
       ;(core.setOutput as jest.Mock).mockImplementation(() => {})
 
       await cacheManager.restoreCache(paths, primaryKey, restoreKeys)
 
-      expect(cache.restoreCache).toHaveBeenCalledWith(paths, primaryKey, restoreKeys)
+      expect(cache.restoreCache).toHaveBeenCalledWith(
+        paths,
+        primaryKey,
+        restoreKeys
+      )
     })
   })
 
@@ -95,26 +109,34 @@ describe('CacheManager', () => {
     it('should save cache successfully', async () => {
       const paths = ['/test/path']
       const key = 'test-key'
-      
+
       ;(cache.saveCache as jest.Mock).mockResolvedValue(undefined)
 
       await cacheManager.saveCache(paths, key)
 
-      expect(mockLogger.info).toHaveBeenCalledWith(`Trying to save: ${paths.toString()}`)
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Trying to save: ${paths.toString()}`
+      )
       expect(cache.saveCache).toHaveBeenCalledWith(paths, key)
-      expect(mockLogger.info).toHaveBeenCalledWith(`Cache saved with key: ${key}`)
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        `Cache saved with key: ${key}`
+      )
     })
 
     it('should handle save cache errors and rethrow them', async () => {
       const paths = ['/test/path']
       const key = 'test-key'
       const error = new Error('Cache save failed')
-      
+
       ;(cache.saveCache as jest.Mock).mockRejectedValue(error)
 
-      await expect(cacheManager.saveCache(paths, key)).rejects.toThrow('Cache save failed')
+      await expect(cacheManager.saveCache(paths, key)).rejects.toThrow(
+        'Cache save failed'
+      )
 
-      expect(mockLogger.warning).toHaveBeenCalledWith('Failed to save cache: Cache save failed')
+      expect(mockLogger.warning).toHaveBeenCalledWith(
+        'Failed to save cache: Cache save failed'
+      )
     })
   })
 

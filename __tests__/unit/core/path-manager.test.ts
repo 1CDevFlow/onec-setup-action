@@ -34,11 +34,11 @@ describe('PathManager', () => {
       warning: jest.fn(),
       error: jest.fn(),
       setFailed: jest.fn()
-    } as any
+    } as jest.Mocked<Logger>
 
     // Мокаем addPath
     ;(core.addPath as jest.Mock).mockImplementation(() => {})
-    
+
     // Мокаем glob
     const mockGlobber = {
       globGenerator: jest.fn().mockReturnValue([])
@@ -82,16 +82,20 @@ describe('PathManager', () => {
       it('should update PATH correctly for EDT on Windows', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            'C:/Program Files/1C/1CE/ring/bin/ring.bat'
-          ])
+          globGenerator: jest
+            .fn()
+            .mockReturnValue(['C:/Program Files/1C/1CE/ring/bin/ring.bat'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 
         await pathManager.updatePath()
 
-        expect(glob.create).toHaveBeenCalledWith('C:/Program Files/1C/**/ring.bat')
-        expect(core.addPath).toHaveBeenCalledWith('C:/Program Files/1C/1CE/ring/bin')
+        expect(glob.create).toHaveBeenCalledWith(
+          'C:/Program Files/1C/**/ring.bat'
+        )
+        expect(core.addPath).toHaveBeenCalledWith(
+          'C:/Program Files/1C/1CE/ring/bin'
+        )
       })
     })
 
@@ -115,15 +119,17 @@ describe('PathManager', () => {
       it('should update PATH correctly for OneC on Windows', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            'C:/Program Files/1cv8/bin/1cv8.exe'
-          ])
+          globGenerator: jest
+            .fn()
+            .mockReturnValue(['C:/Program Files/1cv8/bin/1cv8.exe'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 
         await pathManager.updatePath()
 
-        expect(glob.create).toHaveBeenCalledWith('C:/Program Files/1cv8/**/1cv8.exe')
+        expect(glob.create).toHaveBeenCalledWith(
+          'C:/Program Files/1cv8/**/1cv8.exe'
+        )
         expect(core.addPath).toHaveBeenCalledWith('C:/Program Files/1cv8/bin')
       })
     })
@@ -156,9 +162,9 @@ describe('PathManager', () => {
       it('should update PATH correctly for EDT on Linux', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            '/opt/1C/1CE/ring/bin/ring'
-          ])
+          globGenerator: jest
+            .fn()
+            .mockReturnValue(['/opt/1C/1CE/ring/bin/ring'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 
@@ -189,9 +195,7 @@ describe('PathManager', () => {
       it('should update PATH correctly for OneC on Linux', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            '/opt/1cv8/bin/1cv8'
-          ])
+          globGenerator: jest.fn().mockReturnValue(['/opt/1cv8/bin/1cv8'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 
@@ -224,16 +228,18 @@ describe('PathManager', () => {
       it('should update PATH correctly for EDT on macOS', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            '/Applications/1C/1CE/ring/bin/ring'
-          ])
+          globGenerator: jest
+            .fn()
+            .mockReturnValue(['/Applications/1C/1CE/ring/bin/ring'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 
         await pathManager.updatePath()
 
         expect(glob.create).toHaveBeenCalledWith('/Applications/1C/**/ring')
-        expect(core.addPath).toHaveBeenCalledWith('/Applications/1C/1CE/ring/bin')
+        expect(core.addPath).toHaveBeenCalledWith(
+          '/Applications/1C/1CE/ring/bin'
+        )
       })
     })
 
@@ -251,9 +257,9 @@ describe('PathManager', () => {
       it('should update PATH correctly for OneC on macOS', async () => {
         // Мокаем glob для возврата найденного файла
         const mockGlobber = {
-          globGenerator: jest.fn().mockReturnValue([
-            '/Applications/1cv8/bin/1cv8'
-          ])
+          globGenerator: jest
+            .fn()
+            .mockReturnValue(['/Applications/1cv8/bin/1cv8'])
         }
         ;(glob.create as jest.Mock).mockResolvedValue(mockGlobber)
 

@@ -3,7 +3,6 @@
  */
 
 import { IPlatformDetector } from './interfaces'
-import { PlatformError } from '../errors/base-errors'
 import { PLATFORM_WIN, PLATFORM_LIN, PLATFORM_MAC } from '../utils/constants'
 
 /**
@@ -18,7 +17,7 @@ export class PlatformDetector implements IPlatformDetector {
 
   /**
    * Определяет тип платформы
-   * 
+   *
    * @param platform - строка платформы
    * @returns тип платформы, по умолчанию 'linux' для неизвестных платформ
    */

@@ -6,7 +6,7 @@ export const mockFetch = jest.fn()
 // Создаем мок Response
 export const createMockResponse = (
   status: number,
-  body: any,
+  body: unknown,
   headers: Record<string, string> = {}
 ) => ({
   status,
