@@ -146,7 +146,10 @@ class EDTInstaller extends BaseInstaller {
     cacheManager: ICacheManager,
     pathManager: IPathManager,
     logger: ILogger,
-    EDTClass: new (version: string, platform: string) => { download(): Promise<void>; install(): Promise<void> }
+    EDTClass: new (
+      version: string,
+      platform: string
+    ) => { download(): Promise<void>; install(): Promise<void> }
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный EDT инсталлятор
@@ -175,7 +178,10 @@ class OnecInstaller extends BaseInstaller {
     cacheManager: ICacheManager,
     pathManager: IPathManager,
     logger: ILogger,
-    Platform83Class: new (version: string, platform: string) => { download(): Promise<void>; install(): Promise<void> }
+    Platform83Class: new (
+      version: string,
+      platform: string
+    ) => { download(): Promise<void>; install(): Promise<void> }
   ) {
     super(cacheManager, pathManager, logger)
     // Создаем оригинальный Platform83 инсталлятор

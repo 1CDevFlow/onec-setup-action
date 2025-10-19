@@ -143,13 +143,17 @@ describe('BaseInstaller', () => {
   describe('cache key computation', () => {
     it('should compute correct installed cache key', () => {
       // Доступ к protected методу через тестовый класс
-      const key = (testInstaller as unknown as { computeInstalledKey(): string }).computeInstalledKey()
+      const key = (
+        testInstaller as unknown as { computeInstalledKey(): string }
+      ).computeInstalledKey()
       expect(key).toBe('setup--test--1.0.0--linux')
     })
 
     it('should compute correct installer cache key', () => {
       // Доступ к protected методу через тестовый класс
-      const key = (testInstaller as unknown as { computeInstallerKey(): string }).computeInstallerKey()
+      const key = (
+        testInstaller as unknown as { computeInstallerKey(): string }
+      ).computeInstallerKey()
       expect(key).toBe('setup--installer--test--1.0.0--linux')
     })
   })
