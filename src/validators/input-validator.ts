@@ -1,5 +1,6 @@
 import { ValidationError } from '../errors/base-errors'
 import { DEFAULT_EDT_VERSION, DEFAULT_ONEC_VERSION } from '../utils/constants'
+import { ActionInputs } from '../core/interfaces'
 
 /**
  * Валидатор входных данных для onec-setup-action
@@ -15,7 +16,7 @@ export class InputValidator {
   /**
    * Методы экземпляра для совместимости с интерфейсом IInputValidator
    */
-  validateAll(inputs: Record<string, string | undefined>): void {
+  validateAll(inputs: ActionInputs): void {
     InputValidator.validateAll(inputs)
   }
 
@@ -128,15 +129,7 @@ export class InputValidator {
    * @param inputs - объект с входными данными
    * @throws ValidationError если данные неверные
    */
-  static validateAll(inputs: {
-    type: string
-    edt_version?: string
-    onec_version?: string
-    cache?: string
-    cache_distr?: string
-    username?: string
-    password?: string
-  }): void {
+  static validateAll(inputs: ActionInputs): void {
     this.validateType(inputs.type)
 
     if (inputs.type === 'edt') {

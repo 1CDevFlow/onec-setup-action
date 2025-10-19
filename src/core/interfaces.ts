@@ -205,8 +205,8 @@ export interface ILogger {
  */
 export interface ActionInputs {
   type: string
-  edt_version: string
-  onec_version: string
+  edt_version?: string
+  onec_version?: string
   cache?: string
   cache_distr?: string
   username?: string

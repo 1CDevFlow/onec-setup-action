@@ -73,7 +73,6 @@ describe('installer', () => {
 
   describe('EDT installation', () => {
     it('should install EDT with default version', async () => {
-
       mockCore.getInput.mockImplementation((name: string) => {
         switch (name) {
           case 'type':

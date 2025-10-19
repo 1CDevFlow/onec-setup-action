@@ -1,6 +1,11 @@
 #  VS code dir
 .vscode
 
+# Environment variables with credentials
+.env
+.env.local
+.env.*.local
+
 # temp files and folders
 *.tar.gz
 downloads/

@@ -80455,7 +80455,7 @@ class InstallerFactory {
      */
     static async createEdtInstaller(config, cacheManager, pathManager, logger) {
         // Динамически импортируем EDT класс для избежания циклических зависимостей
-        const { EDT } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 5991, 23));
+        await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 5991, 23));
         // Создаем EDT инсталлятор с новой архитектурой
         return new EDTInstaller(config.version, config.platform, cacheManager, pathManager, logger);
     }
@@ -80464,7 +80464,7 @@ class InstallerFactory {
      */
     static async createOnecInstaller(config, cacheManager, pathManager, logger) {
         // Динамически импортируем Platform83 класс
-        const { Platform83 } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 1366, 23));
+        await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 1366, 23));
         // Создаем OneC инсталлятор с новой архитектурой
         return new OnecInstaller(config.version, config.platform, cacheManager, pathManager, logger);
     }

@@ -56,7 +56,7 @@ describe('onegetjs', () => {
           architecture: 'x64',
           type: 'full'
         },
-        '/tmp/oneget/test',
+        './tmp/oneget/test',
         true
       )
     },
@@ -80,7 +80,7 @@ describe('onegetjs', () => {
           osName: 'linux',
           offline: true
         },
-        '/tmp/oneget/test',
+        './tmp/oneget/test',
         true
       )
     },

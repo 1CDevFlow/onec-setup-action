@@ -1,8 +1,8 @@
-const js = require('@eslint/js');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsparser = require('@typescript-eslint/parser');
-const jest = require('eslint-plugin-jest');
-const globals = require('globals');
+const js = require('@eslint/js')
+const tseslint = require('@typescript-eslint/eslint-plugin')
+const tsparser = require('@typescript-eslint/parser')
+const jest = require('eslint-plugin-jest')
+const globals = require('globals')
 
 module.exports = [
   js.configs.recommended,
@@ -35,12 +35,15 @@ module.exports = [
     },
     rules: {
       // TypeScript specific rules
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' }
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      
+
       // General rules
       'no-console': 'off',
       'no-unused-vars': 'off', // Use TypeScript version instead
@@ -48,7 +51,7 @@ module.exports = [
       'no-var': 'error',
       'object-shorthand': 'error',
       'prefer-template': 'error',
-      
+
       // Jest specific rules
       'jest/no-disabled-tests': 'warn',
       'jest/no-focused-tests': 'error',
@@ -67,4 +70,4 @@ module.exports = [
       'badges/**'
     ]
   }
-];
+]
