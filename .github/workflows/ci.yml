@@ -4,9 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
       - main
+      - develop
+      - refactor
 
 permissions:
   contents: read
@@ -36,9 +39,13 @@ jobs:
         id: npm-format-check
         run: npm run format:check
 
-      - name: Test
-        id: npm-ci-test
-        run: npm run ci-test
+      - name: Unit Tests
+        id: npm-unit-test
+        run: npm run test:unit
+
+      - name: Integration Tests
+        id: npm-integration-test
+        run: npm run test:integration
 
   test-action:
     name: GitHub Actions Test

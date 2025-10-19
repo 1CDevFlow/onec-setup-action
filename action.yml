@@ -17,7 +17,7 @@ inputs:
   edt_version:
     required: false
     description: 'edt version'
-    default: '2023.1.2'
+    default: '2024.2.6'
   onec_version:
     required: false
     description: 'onec version'

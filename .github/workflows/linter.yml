@@ -4,9 +4,12 @@ on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
       - main
+      - develop
+      - refactor
 
 permissions:
   contents: read
@@ -41,7 +44,7 @@ jobs:
         uses: super-linter/super-linter/slim@v7
         env:
           DEFAULT_BRANCH: main
-          FILTER_REGEX_EXCLUDE: dist/**/*
+          FILTER_REGEX_EXCLUDE: dist/**/*|**/__tests__/**
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_JAVASCRIPT_STANDARD: false

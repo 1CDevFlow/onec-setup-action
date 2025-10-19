@@ -8,8 +8,10 @@ describe('filter.ts', () => {
       type: 'full'
     })
     const result = filter.filter(fixtures, filters)
-    console.dir(result)
     expect(result.length).toEqual(1)
+    expect(result[0].name).toContain(
+      'Технологическая платформа 1С:Предприятия для Windows'
+    )
   })
 
   it('x64/x86', async () => {
@@ -47,7 +49,9 @@ describe('filter.ts', () => {
       type: 'client'
     })
     const result = filter.filter(fixtures, filters)
-    console.dir(result)
+    expect(result.length).toBeGreaterThan(0)
+    expect(result[0].name).toContain('Клиент 1С:Предприятия')
+    expect(result[0].name).toContain('DEB')
   })
 })
 

@@ -4,7 +4,9 @@
 # temp files and folders
 *.tar.gz
 downloads/
-oneget
+oneget/
+tmp/
+*.rar
 # Dependency directory
 node_modules
 
