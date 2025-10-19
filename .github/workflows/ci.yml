@@ -46,6 +46,9 @@ jobs:
       - name: Integration Tests
         id: npm-integration-test
         run: npm run test:integration
+        env:
+          ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+          ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
 
   test-action:
     name: GitHub Actions Test
