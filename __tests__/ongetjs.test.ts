@@ -1,7 +1,7 @@
 import { downloadRelease } from '../src/onegetjs'
 import { config } from 'dotenv'
 
-const TIMEOUT = 500000
+const TIMEOUT = 1000000 // 16+ минут для медленных загрузок
 
 describe('onegetjs', () => {
   config()

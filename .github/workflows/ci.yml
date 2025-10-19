@@ -58,6 +58,11 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
+   
+      - name: Setup 7z
+        id: setup-7z
+        run: |
+          sudo apt-get -y install p7zip-full p7zip-rar
 
       - name: Install 1C:Enterprise from deb-packages
         id: test-action

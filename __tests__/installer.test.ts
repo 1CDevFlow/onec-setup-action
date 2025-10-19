@@ -18,7 +18,7 @@ const getBooleanInput = jest.spyOn(core, 'getBooleanInput')
 const runMock = jest.spyOn(installer, 'run')
 
 // Other utilities
-const TIMEOUT = 50000
+const TIMEOUT = 1000000 // 16+ минут для медленных загрузок
 
 type Input = { [key: string]: string }
 
