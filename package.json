@@ -33,8 +33,6 @@
     "test:unit": "npx jest --testPathPattern=__tests__/unit",
     "test:unit:fast": "npx jest --testPathPattern=__tests__/unit --no-coverage --maxWorkers=1",
     "test:unit:ci": "npx jest --testPathPattern=__tests__/unit --maxWorkers=1 --forceExit",
-    "test:unit:fast": "npx jest --testPathPattern=__tests__/unit --no-coverage --maxWorkers=1",
-    "test:unit:ci": "npx jest --testPathPattern=__tests__/unit --maxWorkers=1 --forceExit",
     "test:integration": "npx jest --testPathPattern='__tests__/(installer|ongetjs|downloader).test.ts'",
     "test:integration:simple": "npx jest --testPathPattern=__tests__/integration-simple.test.ts",
     "test:integration:with-credentials": "./script/test-with-credentials.sh",
@@ -98,15 +96,18 @@
     }
   },
   "dependencies": {
+    "@actions/cache": "^4.0.3",
     "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/glob": "^0.5.0",
+    "@actions/io": "^2.0.0",
+    "@actions/tool-cache": "^2.0.2",
     "compare-versions": "^6.1.1",
     "cookiejar": "^2.1.4",
     "node-fetch": "^2.7.0",
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {
-    "@actions/cache": "^4.0.3",
-    "@actions/tool-cache": "^2.0.2",
     "@jest/globals": "^29.7.0",
     "@types/cookiejar": "^2.1.5",
     "@types/jest": "^29.5.12",
@@ -125,6 +126,6 @@
     "prettier": "^3.3.3",
     "prettier-eslint": "^16.3.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.5.4"
   }
 }

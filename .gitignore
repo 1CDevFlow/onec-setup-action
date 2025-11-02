@@ -1,6 +1,6 @@
 #  VS code dir
 .vscode
-
+.kiro
 # Environment variables with credentials
 .env
 .env.local
