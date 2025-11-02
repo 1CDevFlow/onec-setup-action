@@ -8516,7 +8516,7 @@ var node_1 = __importDefault(__webpack_require__(7018));
 exports.Node = node_1.default;
 var text_1 = __importDefault(__webpack_require__(9060));
 exports.TextNode = text_1.default;
-var type_1 = __importDefault(__webpack_require__(2448));
+var type_1 = __importDefault(__webpack_require__(918));
 exports.NodeType = type_1.default;
 var parse_1 = __importDefault(__webpack_require__(1710));
 var valid_1 = __importDefault(__webpack_require__(2890));
@@ -8547,7 +8547,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-var type_1 = __importDefault(__webpack_require__(2448));
+var type_1 = __importDefault(__webpack_require__(918));
 function isTag(node) {
     return node && node.nodeType === type_1.default.ELEMENT_NODE;
 }
@@ -8677,7 +8677,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var node_1 = __importDefault(__webpack_require__(7018));
-var type_1 = __importDefault(__webpack_require__(2448));
+var type_1 = __importDefault(__webpack_require__(918));
 var CommentNode = /** @class */ (function (_super) {
     __extends(CommentNode, _super);
     function CommentNode(rawText, parentNode, range, rawTagName) {
@@ -8770,7 +8770,7 @@ var void_tag_1 = __importDefault(__webpack_require__(3));
 var comment_1 = __importDefault(__webpack_require__(9936));
 var node_1 = __importDefault(__webpack_require__(7018));
 var text_1 = __importDefault(__webpack_require__(9060));
-var type_1 = __importDefault(__webpack_require__(2448));
+var type_1 = __importDefault(__webpack_require__(918));
 function decode(val) {
     // clone string
     return JSON.parse(JSON.stringify(he_1.default.decode(val)));
@@ -10029,7 +10029,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var he_1 = __webpack_require__(3527);
 var node_1 = __importDefault(__webpack_require__(7018));
-var type_1 = __importDefault(__webpack_require__(2448));
+var type_1 = __importDefault(__webpack_require__(918));
 /**
  * TextNode to contain a text element in DOM tree.
  * @param {string} value [description]
@@ -10155,7 +10155,7 @@ function trimText(text) {
 
 /***/ }),
 
-/***/ 2448:
+/***/ 918:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";

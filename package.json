@@ -29,21 +29,28 @@
   },
   "scripts": {
     "bundle": "npm run format:write && npm run package",
-    "ci-test": "npx jest",
+    "ci-test": "npx jest --maxWorkers=1 --forceExit",
     "test:unit": "npx jest --testPathPattern=__tests__/unit",
+    "test:unit:fast": "npx jest --testPathPattern=__tests__/unit --no-coverage --maxWorkers=1",
+    "test:unit:ci": "npx jest --testPathPattern=__tests__/unit --maxWorkers=1 --forceExit",
+    "test:unit:fast": "npx jest --testPathPattern=__tests__/unit --no-coverage --maxWorkers=1",
+    "test:unit:ci": "npx jest --testPathPattern=__tests__/unit --maxWorkers=1 --forceExit",
     "test:integration": "npx jest --testPathPattern='__tests__/(installer|ongetjs|downloader).test.ts'",
     "test:integration:simple": "npx jest --testPathPattern=__tests__/integration-simple.test.ts",
     "test:integration:with-credentials": "./script/test-with-credentials.sh",
     "test:setup": "./script/setup-test-env.sh",
     "test:cleanup": "./script/cleanup-test-env.sh",
-    "test:all": "npx jest",
-    "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
+    "test:all": "npx jest --maxWorkers=1 --forceExit",
+    "test:watch": "npx jest --watch --no-coverage",
+    "coverage": "npx jest --coverage --maxWorkers=1 --forceExit && npx make-coverage-badge --output-path ./badges/coverage.svg",
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
+    "format:fix": "npm run format:write",
     "lint": "npx eslint .",
+    "lint:fix": "npx eslint . --fix",
     "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "package:watch": "npm run package -- --watch",
-    "test": "npx jest",
+    "test": "npx jest --maxWorkers=1 --forceExit",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
   "license": "MIT",
@@ -52,6 +59,10 @@
     "verbose": true,
     "clearMocks": true,
     "testEnvironment": "node",
+    "testTimeout": 30000,
+    "maxWorkers": 1,
+    "forceExit": true,
+    "detectOpenHandles": true,
     "moduleFileExtensions": [
       "js",
       "ts"
@@ -71,10 +82,20 @@
       "text",
       "lcov"
     ],
-    "collectCoverage": true,
+    "collectCoverage": false,
     "collectCoverageFrom": [
-      "./src/**"
-    ]
+      "./src/**",
+      "!./src/**/*.d.ts",
+      "!./src/index.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
   },
   "dependencies": {
     "@actions/core": "^1.11.1",

@@ -20,15 +20,9 @@
   "parserOptions": {
     "ecmaVersion": 2023,
     "sourceType": "module",
-    "project": [
-      "./.github/linters/tsconfig.json",
-      "./tsconfig.json"
-    ]
+    "project": ["./.github/linters/tsconfig.json", "./tsconfig.json"]
   },
-  "plugins": [
-    "jest",
-    "@typescript-eslint"
-  ],
+  "plugins": ["jest", "@typescript-eslint"],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
