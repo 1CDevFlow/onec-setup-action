@@ -81076,7 +81076,7 @@ class Platform83 extends onecTool_1.OnecTool {
             platformType = 'deb';
         }
         await (0, onegetjs_1.downloadRelease)({
-            project: 'Platform83',
+            project: getProjectName(this.version),
             version: this.version,
             osName: platformType,
             architecture: 'x64',
@@ -81163,6 +81163,23 @@ class Platform83 extends onecTool_1.OnecTool {
     }
 }
 exports.Platform83 = Platform83;
+function getProjectName(version) {
+    const versionParts = version.split('.');
+    if (versionParts.length < 2) {
+        throw new Error(`Invalid version format: ${version}`);
+    }
+    const major = parseInt(versionParts[0], 10);
+    const minor = parseInt(versionParts[1], 10);
+    if (major === 8 && minor === 5) {
+        return 'Platform85';
+    }
+    else if (major === 8 && minor === 3) {
+        return 'Platform83';
+    }
+    else {
+        throw new Error(`Unsupported version: ${version}. Supported versions: 8.3.* and 8.5.*`);
+    }
+}
 
 
 /***/ }),
