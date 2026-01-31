@@ -1,8 +1,8 @@
-import * as core from '@actions/core'
 import { HttpClient } from './httpClient'
 import { AuthProvider, AuthProviderType, AuthProviderFactory } from './auth'
 import * as fs from 'fs'
 import * as path from 'path'
+import { logger } from './logger'
 
 const RELEASES_URL = 'https://releases.1c.ru'
 const PROJECTS_URL = '/project/'
@@ -18,7 +18,7 @@ export class Client {
   ) {
     if (!login || !password) {
       const err = new Error('Do not set login or/and password')
-      core.setFailed(err)
+      logger.error(err.message)
       throw err
     }
 
@@ -63,7 +63,7 @@ export class Client {
   }
 
   async downloadFile(url: string, output: string): Promise<string | undefined> {
-    core.info(`Download ${url} to ${output}`)
+    logger.info(`Download ${url} to ${output}`)
 
     const streamResponse = await this.httpClient.get(url, {
       responseType: 'stream',
@@ -79,7 +79,7 @@ export class Client {
 
     try {
       if (fs.statSync(fullFileName).isFile()) {
-        core.info(`${fileName} (${fullFileName}) already exist`)
+        logger.info(`${fileName} (${fullFileName}) already exist`)
         return fullFileName
       }
     } catch {
@@ -94,7 +94,7 @@ export class Client {
       destination.on('finish', () => resolve(undefined))
     })
 
-    core.info('Downloaded')
+    logger.info('Downloaded')
     return fullFileName
   }
 

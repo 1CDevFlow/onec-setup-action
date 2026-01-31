@@ -1,8 +1,8 @@
-import * as core from '@actions/core'
 import { parse } from 'node-html-parser'
 import { HttpClient } from '../httpClient'
 import { AuthProvider } from './authProvider'
 import { URLSearchParams } from 'url'
+import { logger } from '../logger'
 
 const RELEASES_URL = 'https://releases.1c.ru'
 
@@ -66,9 +66,9 @@ export class FormAuthProvider implements AuthProvider {
         )
       }
 
-      core.debug('Form authentication completed')
+      logger.debug('Form authentication completed')
     } catch (error) {
-      core.error(`Form authentication failed: ${error}`)
+      logger.error(`Form authentication failed: ${error}`)
       throw error
     }
   }

@@ -1,9 +1,10 @@
 import { OnecTool } from './onecTool'
 import * as core from '@actions/core'
+import { logger } from '../onegetjs/logger'
 import { exec } from '@actions/exec'
-import * as glob from '@actions/glob'
 import * as tc from '@actions/tool-cache'
 import { downloadRelease } from '../onegetjs'
+import { findFiles, findFirstFile } from '../fileLocator'
 
 export class EDT extends OnecTool {
   INSTALLED_CACHE_PRIMARY_KEY = 'edt'
@@ -42,19 +43,18 @@ export class EDT extends OnecTool {
 
     if (this.isWindows()) {
       const pattern = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}/**/1c_edt_distr_offline*.zip`
-      core.info(pattern)
-      const globber = await glob.create(pattern)
-      for await (const file of globber.globGenerator()) {
+      logger.info(pattern)
+      const file = await findFirstFile(pattern)
+      if (file) {
         await tc.extractZip(file)
       }
     }
     const patterns = [
       `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}/**/${installerPattern}`
     ]
-    const globber = await glob.create(patterns.join('\n'))
-    const files = await globber.glob()
+    const files = await findFiles(patterns.join('\n'))
 
-    core.info(`finded ${files}`)
+    logger.info(`finded ${files}`)
 
     const install_arg = [
       'install',

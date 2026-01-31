@@ -60934,6 +60934,63 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 49934:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.findFiles = findFiles;
+exports.findFirstFile = findFirstFile;
+const glob = __importStar(__nccwpck_require__(75268));
+async function findFiles(pattern) {
+    const globber = await glob.create(pattern);
+    return await globber.glob();
+}
+async function findFirstFile(pattern) {
+    const globber = await glob.create(pattern);
+    for await (const file of globber.globGenerator()) {
+        return file;
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
 /***/ 46866:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -61022,6 +61079,9 @@ exports.run = run;
 const core = __importStar(__nccwpck_require__(16966));
 const utils_1 = __nccwpck_require__(66087);
 const tools = __importStar(__nccwpck_require__(31958));
+const cacheManager_1 = __nccwpck_require__(37081);
+const pathManager_1 = __nccwpck_require__(20144);
+const logger_1 = __nccwpck_require__(41666);
 async function run() {
     const type = core.getInput('type');
     const edt_version = core.getInput('edt_version');
@@ -61036,7 +61096,7 @@ async function run() {
         installer = new tools.EDT(edt_version, process.platform);
     }
     else if (type === 'onec') {
-        console.log('Install 1C:Enterprise v.' + onec_version);
+        logger_1.logger.info('Install 1C:Enterprise v.' + onec_version);
         if (onec_version === undefined) {
             throw new Error('Onec version not specified');
         }
@@ -61045,35 +61105,40 @@ async function run() {
     else {
         throw new Error('failed to recognize the installer type');
     }
+    const cacheManager = new cacheManager_1.CacheManager();
+    const pathManager = new pathManager_1.PathManager();
     let installerRestoredKey;
     let installerRestored = false;
     let installationRestoredKey;
     let installationRestored = false;
     if (useCache) {
-        installationRestoredKey = await installer.restoreInstalledTool();
+        installationRestoredKey = await cacheManager.restoreInstalled(installer.computeInstalledKey(), installer.cache_);
         installationRestored = installationRestoredKey !== undefined;
     }
     if (installationRestored) {
+        await pathManager.addExecutablesToPath(installer.cache_[0], installer.getRunFileNames());
         return;
     }
     if (useCacheDistr) {
-        installerRestoredKey = await installer.restoreInstallationPackage();
+        installerRestoredKey = await cacheManager.restoreInstaller(installer.computeInstallerKey(), [installer.getInstallersPath()]);
         installerRestored = installerRestoredKey !== undefined;
     }
     if (!installerRestored) {
         await installer.download();
-        core.info('Installer downloaded');
+        logger_1.logger.info('Installer downloaded');
         if (useCacheDistr) {
-            await installer.saveInstallerCache();
-            core.info('Installer cached');
+            await cacheManager.saveInstaller(installer.computeInstallerKey(), [
+                installer.getInstallersPath()
+            ]);
+            logger_1.logger.info('Installer cached');
         }
     }
     await installer.install();
-    core.info('Installing success');
-    await installer.updatePath();
-    core.info('Env variable `PATH` updated');
+    logger_1.logger.info('Installing success');
+    await pathManager.addExecutablesToPath(installer.cache_[0], installer.getRunFileNames());
+    logger_1.logger.info('Env variable `PATH` updated');
     if (useCache) {
-        await installer.saveInstalledCache();
+        await cacheManager.saveInstalled(installer.computeInstalledKey(), installer.cache_);
     }
 }
 
@@ -61121,71 +61186,32 @@ exports.AuthProviderFactory = AuthProviderFactory;
 /***/ }),
 
 /***/ 30514:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FormAuthProvider = void 0;
-const core = __importStar(__nccwpck_require__(16966));
 const node_html_parser_1 = __nccwpck_require__(73603);
-const httpClient_1 = __nccwpck_require__(12629);
 const url_1 = __nccwpck_require__(87016);
+const logger_1 = __nccwpck_require__(41666);
 const RELEASES_URL = 'https://releases.1c.ru';
 class FormAuthProvider {
     username;
     password;
-    httpClient;
     constructor(username, password) {
         this.username = username;
         this.password = password;
-        this.httpClient = new httpClient_1.HttpClient();
     }
-    async authenticate() {
+    async authenticate(httpClient) {
         try {
-            // 1. Загружаем начальную страницу
-            const response = await this.httpClient.get(RELEASES_URL);
+            const response = await httpClient.get(RELEASES_URL);
             const html = response.data;
-            // 2. Парсим форму аутентификации
             const root = (0, node_html_parser_1.parse)(html);
             const form = root.querySelector('form');
             if (!form) {
                 throw new Error('Authentication form not found');
             }
-            // 3. Извлекаем все input поля
             const inputs = form.querySelectorAll('input');
             const formData = {};
             inputs.forEach(input => {
@@ -61193,47 +61219,35 @@ class FormAuthProvider {
                 const value = input.getAttribute('value');
                 const type = input.getAttribute('type');
                 if (name) {
-                    // Для чекбоксов: не добавляем поле, если значение пустое
                     if (type === 'checkbox' && !value) {
                         return;
                     }
                     formData[name] = value || '';
                 }
             });
-            // 4. Устанавливаем username и password
             formData['username'] = this.username;
             formData['password'] = this.password;
-            // 5. Получаем URL формы
             const formAction = form.getAttribute('action') || '';
             const formUrl = new URL(formAction, response.request.res?.responseUrl || RELEASES_URL).toString();
             const formBody = new url_1.URLSearchParams(formData).toString();
-            // 6. Отправляем форму
-            const postResponse = await this.httpClient.post(formUrl, formBody, {
+            await httpClient.post(formUrl, formBody, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     Referer: response.request.res?.responseUrl || RELEASES_URL,
                     Accept: '*/*'
                 }
             });
-            // 7. Проверяем успешность аутентификации
-            const testResponse = await this.httpClient.get(RELEASES_URL);
+            const testResponse = await httpClient.get(RELEASES_URL);
             const finalUrl = testResponse.request.res?.responseUrl || '';
-            // Проверяем, что мы не на странице логина
             if (finalUrl.includes('/login')) {
                 throw new Error(`Form authentication failed - still on login page. Final URL: ${finalUrl}`);
             }
-            core.debug('Form authentication completed');
+            logger_1.logger.debug('Form authentication completed');
         }
         catch (error) {
-            core.error(`Form authentication failed: ${error}`);
+            logger_1.logger.error(`Form authentication failed: ${error}`);
             throw error;
         }
-    }
-    async get(url, options) {
-        return this.httpClient.get(url, options);
-    }
-    getCookies() {
-        return this.httpClient.getCookies('');
     }
 }
 exports.FormAuthProvider = FormAuthProvider;
@@ -61261,108 +61275,61 @@ Object.defineProperty(exports, "FormAuthProvider", ({ enumerable: true, get: fun
 /***/ }),
 
 /***/ 54309:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TokenAuthProvider = void 0;
-const core = __importStar(__nccwpck_require__(16966));
-const httpClient_1 = __nccwpck_require__(12629);
+const logger_1 = __nccwpck_require__(41666);
 const LOGIN_URL = 'https://login.1c.ru';
 const TICKET_URL = `${LOGIN_URL}/rest/public/ticket/get`;
 const RELEASES_URL = 'https://releases.1c.ru';
-// https://login.1c.ru/api/public/ticket?wsdl
-const AUTH_URL = (/* unused pure expression or super */ null && (`${LOGIN_URL}/rest/public/user/auth`));
 class TokenAuthProvider {
     username;
     password;
-    httpClient;
     constructor(username, password) {
         this.username = username;
         this.password = password;
-        this.httpClient = new httpClient_1.HttpClient();
     }
-    async authenticate() {
+    async authenticate(httpClient) {
         try {
-            const continueURL = await this.getAuthToken();
-            const response = await this.httpClient.get(continueURL);
+            const continueURL = await this.getAuthToken(httpClient);
+            const response = await httpClient.get(continueURL);
             if (response.status !== 200) {
                 throw new Error(`Auth failed with status ${response.status}`);
             }
-            const testResponse = await this.httpClient.get(RELEASES_URL);
-            const testHtml = testResponse.data;
-            if (testHtml.includes('Личные данные') || testHtml.includes('Войти')) {
-                throw new Error('Authentication verification failed - still getting login page');
+            const testResponse = await httpClient.get(RELEASES_URL);
+            const finalUrl = testResponse.request.res?.responseUrl || '';
+            if (finalUrl.includes('/login')) {
+                throw new Error('Token authentication failed - still on login page');
             }
-            core.debug('Token authentication successful');
+            logger_1.logger.debug('Token authentication successful');
         }
         catch (error) {
-            core.error(`Token authentication failed: ${error}`);
+            logger_1.logger.error(`Token authentication failed: ${error}`);
             throw error;
         }
     }
-    async get(url, options) {
-        return this.httpClient.get(url, options);
-    }
-    getCookies() {
-        return this.httpClient.getCookies('');
-    }
-    async getAuthToken(url = RELEASES_URL) {
-        core.debug('Authorization');
+    async getAuthToken(httpClient, url = RELEASES_URL) {
+        logger_1.logger.debug('Authorization');
         const body = {
             login: this.username,
             password: this.password,
             serviceNick: url
         };
-        const response = await this.httpClient.post(TICKET_URL, body, {
+        const response = await httpClient.post(TICKET_URL, body, {
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        this.checkResponseError(response);
+        if (response.status >= 400) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         const data = typeof response.data === 'string'
             ? JSON.parse(response.data)
             : response.data;
         return `${LOGIN_URL}/ticket/auth?token=${data.ticket}`;
-    }
-    checkResponseError(response) {
-        if (response.status >= 400) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
     }
 }
 exports.TokenAuthProvider = TokenAuthProvider;
@@ -61410,28 +61377,23 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Client = void 0;
-const core = __importStar(__nccwpck_require__(16966));
 const httpClient_1 = __nccwpck_require__(12629);
 const auth_1 = __nccwpck_require__(51555);
 const fs = __importStar(__nccwpck_require__(79896));
 const path = __importStar(__nccwpck_require__(16928));
+const logger_1 = __nccwpck_require__(41666);
 const RELEASES_URL = 'https://releases.1c.ru';
 const PROJECTS_URL = '/project/';
 class Client {
-    login;
-    password;
     httpClient;
     authProvider;
     constructor(login, password, config) {
         if (!login || !password) {
             const err = new Error('Do not set login or/and password');
-            core.setFailed(err);
+            logger_1.logger.error(err.message);
             throw err;
         }
-        this.login = login;
-        this.password = password;
         this.httpClient = new httpClient_1.HttpClient();
-        // Создаем провайдер через фабрику
         this.authProvider = auth_1.AuthProviderFactory.create({
             username: login,
             password: password,
@@ -61439,20 +61401,15 @@ class Client {
         });
     }
     async auth() {
-        await this.authProvider.authenticate();
+        await this.authProvider.authenticate(this.httpClient);
     }
     async getText(url) {
         const fullURL = new URL(url, RELEASES_URL);
-        const response = await this.get(fullURL.toString());
+        const response = await this.httpClient.get(fullURL.toString());
         return response.data;
     }
     async get(url) {
-        return this.authProvider.get(url);
-    }
-    checkResponseError(response) {
-        if (response.status >= 400) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        return this.httpClient.get(url);
     }
     extractFileName(url, headers) {
         // Try to extract from Content-Disposition header
@@ -61469,35 +61426,32 @@ class Client {
         return fileName || undefined;
     }
     async downloadFile(url, output) {
-        core.info(`Download ${url}`);
-        // First request to get headers and filename
-        const headResponse = await this.get(url);
-        const fileName = this.extractFileName(url, headResponse.headers);
+        logger_1.logger.info(`Download ${url} to ${output}`);
+        const streamResponse = await this.httpClient.get(url, {
+            responseType: 'stream',
+            isStream: true
+        });
+        const fileName = this.extractFileName(url, streamResponse.headers);
         if (!fileName) {
             return undefined;
         }
         const fullFileName = path.resolve(output, fileName);
         try {
             if (fs.statSync(fullFileName).isFile()) {
-                core.info(`${fileName} already exist`);
+                logger_1.logger.info(`${fileName} (${fullFileName}) already exist`);
                 return fullFileName;
             }
         }
         catch {
             /* empty */
         }
-        // Second request to download the file as stream
-        const streamResponse = await this.authProvider.get(url, {
-            responseType: 'stream',
-            isStream: true
-        });
         const destination = fs.createWriteStream(fullFileName, { flags: 'wx' });
         await new Promise((resolve, reject) => {
             streamResponse.data.pipe(destination);
             streamResponse.data.on('error', reject);
             destination.on('finish', () => resolve(undefined));
         });
-        core.info('Downloaded');
+        logger_1.logger.info('Downloaded');
         return fullFileName;
     }
     async projectPage(project) {
@@ -61598,47 +61552,14 @@ function filter(files, filters) {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HttpClient = void 0;
-const core = __importStar(__nccwpck_require__(16966));
 const got_1 = __importDefault(__nccwpck_require__(66114));
 const tough_cookie_1 = __nccwpck_require__(72776);
+const logger_1 = __nccwpck_require__(41666);
 class HttpClient {
     client;
     jar;
@@ -61655,21 +61576,21 @@ class HttpClient {
             hooks: {
                 beforeRequest: [
                     options => {
-                        core.debug(`Request [${options.method}] ${options.url}`);
+                        logger_1.logger.debug(`Request [${options.method}] ${options.url}`);
                     }
                 ],
                 afterResponse: [
                     response => {
-                        core.debug(`Response [${response.statusCode}] ${response.requestUrl}`);
+                        logger_1.logger.debug(`Response [${response.statusCode}] ${response.requestUrl}`);
                         if (response.redirectUrls.length > 0) {
-                            core.debug(`Redirects: ${response.redirectUrls.join(' -> ')}`);
+                            logger_1.logger.debug(`Redirects: ${response.redirectUrls.join(' -> ')}`);
                         }
                         return response;
                     }
                 ],
                 beforeError: [
                     error => {
-                        core.error(`Request failed: ${error.message}`);
+                        logger_1.logger.error(`Request failed: ${error.message}`);
                         return error;
                     }
                 ]
@@ -61716,7 +61637,7 @@ class HttpClient {
                 throwHttpErrors: false
             });
             return {
-                data: isJson ? response.body : response.body,
+                data: response.body,
                 request: { res: { responseUrl: response.url } },
                 status: response.statusCode,
                 headers: response.headers
@@ -61793,12 +61714,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadRelease = downloadRelease;
 const downloader_1 = __nccwpck_require__(73101);
 const parser = __importStar(__nccwpck_require__(9407));
-const core = __importStar(__nccwpck_require__(16966));
 const filter = __importStar(__nccwpck_require__(52260));
 const process_1 = __importDefault(__nccwpck_require__(932));
 const path_1 = __importDefault(__nccwpck_require__(16928));
 const io = __importStar(__nccwpck_require__(60378));
 const unpacker_1 = __nccwpck_require__(56033);
+const logger_1 = __nccwpck_require__(41666);
 class OneGet {
     client;
     downloadTo;
@@ -61815,17 +61736,17 @@ class OneGet {
         const filters = filter.getFilters(artifactFilter);
         const files = filter.filter(version.files, filters);
         if (files.length === 0) {
-            error(`Found't files for version ${JSON.stringify(artifactFilter)}`);
+            this.error(`Found't files for version ${JSON.stringify(artifactFilter)}`);
         }
-        core.debug(`Files for downloading ${JSON.stringify(files)}`);
+        logger_1.logger.debug(`Files for downloading ${JSON.stringify(files)}`);
         const downloadedFiles = [];
         for (const file of files) {
             for (let attempt = 1; attempt <= 2; attempt++) {
-                core.info(`Downloading ${file.name}`);
-                core.debug(`Get artifact download page: ${file.name}`);
+                logger_1.logger.info(`Downloading ${file.name}`);
+                logger_1.logger.debug(`Get artifact download page: ${file.name}`);
                 const links = parser.fileDownloadLinks(await this.client.getText(file.url));
                 if (links.length === 0) {
-                    core.error(`Don't found links for file ${file.name}`);
+                    logger_1.logger.error(`Don't found links for file ${file.name}`);
                     continue;
                 }
                 for (const link of links) {
@@ -61841,11 +61762,11 @@ class OneGet {
         return downloadedFiles;
     }
     async versionInfo(project, version) {
-        core.debug(`Get project page for: ${project}`);
+        logger_1.logger.debug(`Get project page for: ${project}`);
         try {
             const page = await this.client.projectPage(project);
             const versions = parser.versions(page);
-            core.debug(`Found ${versions.length} versions: ${versions
+            logger_1.logger.debug(`Found ${versions.length} versions: ${versions
                 .map(v => v.name)
                 .slice(0, 5)
                 .join(', ')}`);
@@ -61854,25 +61775,29 @@ class OneGet {
                 // Если версия не найдена, попробуем найти похожие
                 const similarVersions = versions.filter(v => v.name.includes(version.split('.').slice(0, 2).join('.')));
                 if (similarVersions.length > 0) {
-                    core.warning(`Version ${version} not found, but found similar: ${similarVersions.map(v => v.name).join(', ')}`);
+                    logger_1.logger.error(`Version ${version} not found, but found similar: ${similarVersions.map(v => v.name).join(', ')}`);
                 }
-                error(`Version ${version} for ${project} not found`);
+                this.error(`Version ${version} for ${project} not found`);
             }
             const versionInfo = filteredVersions[0];
-            core.debug(`Version info: ${JSON.stringify(versionInfo)}`);
+            logger_1.logger.debug(`Version info: ${JSON.stringify(versionInfo)}`);
             versionInfo.files = await this.versionFiles(versionInfo);
-            core.debug(`Version files: ${JSON.stringify(versionInfo.files)}`);
+            logger_1.logger.debug(`Version files: ${JSON.stringify(versionInfo.files)}`);
             return versionInfo;
         }
         catch (err) {
-            core.error(`Failed to get version info for ${project} ${version}: ${err}`);
+            logger_1.logger.error(`Failed to get version info for ${project} ${version}: ${err}`);
             throw err;
         }
     }
     async versionFiles(version) {
-        core.debug(`Get project version page for: ${version.name}`);
+        logger_1.logger.debug(`Get project version page for: ${version.name}`);
         const page = await this.client.getText(version.url);
         return parser.releaseFiles(page);
+    }
+    error(message) {
+        logger_1.logger.error(message);
+        throw message;
     }
 }
 exports["default"] = OneGet;
@@ -61890,10 +61815,66 @@ async function downloadRelease(release, destination, unpack = false) {
         await (0, unpacker_1.unpackFiles)(artifacts, destination);
     }
 }
-function error(message) {
-    core.error(message);
-    throw message;
+
+
+/***/ }),
+
+/***/ 41666:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.logger = void 0;
+const core = __importStar(__nccwpck_require__(16966));
+class StaticLogger {
+    warning(msg) {
+        core.warning(msg);
+    }
+    info(msg) {
+        core.info(msg);
+    }
+    error(msg) {
+        core.error(msg);
+    }
+    debug(msg) {
+        core.debug(msg);
+    }
 }
+exports.logger = new StaticLogger();
 
 
 /***/ }),
@@ -61956,6 +61937,137 @@ function fileDownloadLinks(content) {
 
 /***/ }),
 
+/***/ 69579:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getPlatform = getPlatform;
+exports.isWindows = isWindows;
+exports.isLinux = isLinux;
+exports.isMac = isMac;
+exports.getPlatformType = getPlatformType;
+const PLATFORM_WIN = 'win32';
+const PLATFORM_LIN = 'linux';
+const PLATFORM_MAC = 'darwin';
+function getPlatform() {
+    return process.platform;
+}
+function isWindows() {
+    return process.platform === PLATFORM_WIN;
+}
+function isLinux() {
+    return process.platform === PLATFORM_LIN;
+}
+function isMac() {
+    return process.platform === PLATFORM_MAC;
+}
+function getPlatformType() {
+    switch (process.platform) {
+        case PLATFORM_WIN:
+            return 'win';
+        case PLATFORM_MAC:
+            return 'mac';
+        case PLATFORM_LIN:
+            return 'linux';
+        default:
+            throw new Error(`Unrecognized os ${process.platform}`);
+    }
+}
+
+
+/***/ }),
+
+/***/ 37081:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CacheManager = void 0;
+const core = __importStar(__nccwpck_require__(16966));
+const logger_1 = __nccwpck_require__(41666);
+const cache = __importStar(__nccwpck_require__(31866));
+const utils_1 = __nccwpck_require__(66087);
+class CacheManager {
+    async restoreInstaller(key, paths) {
+        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)(paths, key);
+        this.logCacheResult(matchedKey, key);
+        return matchedKey;
+    }
+    async restoreInstalled(key, paths) {
+        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)(paths, key);
+        this.logCacheResult(matchedKey, key);
+        return matchedKey;
+    }
+    async saveInstaller(key, paths) {
+        try {
+            await cache.saveCache(paths, key);
+        }
+        catch (error) {
+            if (error instanceof Error)
+                logger_1.logger.info(error.message);
+        }
+    }
+    async saveInstalled(key, paths) {
+        try {
+            logger_1.logger.info(`Trying to save: ${paths.toString()}`);
+            await cache.saveCache(paths, key);
+        }
+        catch (error) {
+            if (error instanceof Error)
+                logger_1.logger.info(error.message);
+        }
+    }
+    logCacheResult(matchedKey, primaryKey) {
+        if (matchedKey) {
+            logger_1.logger.info(`Cache restored from key: ${matchedKey}`);
+        }
+        else {
+            logger_1.logger.info(`${primaryKey} cache is not found`);
+        }
+        core.setOutput('cache-hit', matchedKey === primaryKey);
+    }
+}
+exports.CacheManager = CacheManager;
+
+
+/***/ }),
+
 /***/ 45117:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -61998,10 +62110,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EDT = void 0;
 const onecTool_1 = __nccwpck_require__(90499);
 const core = __importStar(__nccwpck_require__(16966));
+const logger_1 = __nccwpck_require__(41666);
 const exec_1 = __nccwpck_require__(92851);
-const glob = __importStar(__nccwpck_require__(75268));
 const tc = __importStar(__nccwpck_require__(95440));
 const onegetjs_1 = __nccwpck_require__(79200);
+const fileLocator_1 = __nccwpck_require__(49934);
 class EDT extends onecTool_1.OnecTool {
     INSTALLED_CACHE_PRIMARY_KEY = 'edt';
     version;
@@ -62032,18 +62145,17 @@ class EDT extends onecTool_1.OnecTool {
         }
         if (this.isWindows()) {
             const pattern = `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}/**/1c_edt_distr_offline*.zip`;
-            core.info(pattern);
-            const globber = await glob.create(pattern);
-            for await (const file of globber.globGenerator()) {
+            logger_1.logger.info(pattern);
+            const file = await (0, fileLocator_1.findFirstFile)(pattern);
+            if (file) {
                 await tc.extractZip(file);
             }
         }
         const patterns = [
             `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}/**/${installerPattern}`
         ];
-        const globber = await glob.create(patterns.join('\n'));
-        const files = await globber.glob();
-        core.info(`finded ${files}`);
+        const files = await (0, fileLocator_1.findFiles)(patterns.join('\n'));
+        logger_1.logger.info(`finded ${files}`);
         const install_arg = [
             'install',
             '--ignore-hardware-checks',
@@ -62111,11 +62223,51 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 __exportStar(__nccwpck_require__(45117), exports);
 __exportStar(__nccwpck_require__(61962), exports);
 __exportStar(__nccwpck_require__(90499), exports);
+__exportStar(__nccwpck_require__(37081), exports);
+__exportStar(__nccwpck_require__(20144), exports);
 
 
 /***/ }),
 
 /***/ 90499:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OnecTool = void 0;
+const platform_1 = __nccwpck_require__(69579);
+class OnecTool {
+    CACHE_KEY_PREFIX = 'setup';
+    INSTALLER_CACHE_PRIMARY_KEY = 'installer';
+    getInstallersPath() {
+        return `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
+    }
+    computeInstalledKey() {
+        return `${this.CACHE_KEY_PREFIX}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
+    }
+    computeInstallerKey() {
+        return `${this.CACHE_KEY_PREFIX}--${this.INSTALLER_CACHE_PRIMARY_KEY}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
+    }
+    isWindows() {
+        return (0, platform_1.isWindows)();
+    }
+    isMac() {
+        return (0, platform_1.isMac)();
+    }
+    isLinux() {
+        return (0, platform_1.isLinux)();
+    }
+    getPlatformType() {
+        return (0, platform_1.getPlatformType)();
+    }
+}
+exports.OnecTool = OnecTool;
+
+
+/***/ }),
+
+/***/ 20144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -62157,113 +62309,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.OnecTool = void 0;
+exports.PathManager = void 0;
 const core = __importStar(__nccwpck_require__(16966));
-const cache = __importStar(__nccwpck_require__(31866));
-const glob = __importStar(__nccwpck_require__(75268));
+const logger_1 = __nccwpck_require__(41666);
 const path_1 = __importDefault(__nccwpck_require__(16928));
-const utils_1 = __nccwpck_require__(66087);
-const PLATFORM_WIN = 'win32';
-const PLATFORM_LIN = 'linux';
-const PLATFORM_MAC = 'darwin';
-class OnecTool {
-    CACHE_KEY_PREFIX = 'setup';
-    INSTALLER_CACHE_PRIMARY_KEY = 'installer';
-    async updatePath() {
-        for (const element of this.getRunFileNames()) {
-            const pattern = `${this.cache_[0]}/**/${element}`;
-            core.info(pattern);
-            const globber = await glob.create(pattern);
-            for await (const file of globber.globGenerator()) {
-                core.info(`add to PATH ${path_1.default.dirname(file)} (${file}) `);
+const fileLocator_1 = __nccwpck_require__(49934);
+class PathManager {
+    async addExecutablesToPath(searchDir, executables) {
+        for (const executable of executables) {
+            const pattern = `${searchDir}/**/${executable}`;
+            logger_1.logger.info(pattern);
+            const file = await (0, fileLocator_1.findFirstFile)(pattern);
+            if (file) {
+                logger_1.logger.info(`add to PATH ${path_1.default.dirname(file)} (${file})`);
                 core.addPath(path_1.default.dirname(file));
                 break;
             }
         }
     }
-    getInstallersPath() {
-        return `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`;
-    }
-    async handleLoadedCache() {
-        await this.updatePath();
-    }
-    async restoreInstallationPackage() {
-        const primaryKey = this.computeInstallerKey();
-        const restorePath = this.getInstallersPath();
-        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)([restorePath], primaryKey);
-        await this.handleLoadedCache();
-        await this.handleMatchResult(matchedKey, primaryKey);
-        return matchedKey;
-    }
-    async restoreInstalledTool() {
-        const primaryKey = this.computeInstalledKey();
-        const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)(this.cache_, primaryKey);
-        await this.handleLoadedCache();
-        await this.handleMatchResult(matchedKey, primaryKey);
-        return matchedKey;
-    }
-    computeInstalledKey() {
-        return `${this.CACHE_KEY_PREFIX}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
-    }
-    computeInstallerKey() {
-        return `${this.CACHE_KEY_PREFIX}--${this.INSTALLER_CACHE_PRIMARY_KEY}--${this.INSTALLED_CACHE_PRIMARY_KEY}--${this.version}--${this.platform}`;
-    }
-    async handleMatchResult(matchedKey, primaryKey) {
-        if (matchedKey) {
-            core.info(`Cache restored from key: ${matchedKey}`);
-        }
-        else {
-            core.info(`${primaryKey} cache is not found`);
-        }
-        core.setOutput('cache-hit', matchedKey === primaryKey);
-    }
-    async saveInstallerCache() {
-        try {
-            await cache.saveCache([this.getInstallersPath()], this.computeInstallerKey());
-        }
-        catch (error) {
-            if (error instanceof Error)
-                core.info(error.message);
-        }
-    }
-    async saveInstalledCache() {
-        try {
-            core.info(`Trying to save: ${this.cache_.slice().toString()}`);
-            await cache.saveCache(this.cache_.slice(), this.computeInstalledKey());
-        }
-        catch (error) {
-            if (error instanceof Error)
-                core.info(error.message);
-        }
-    }
-    isWindows() {
-        return PLATFORM_WIN === this.platform;
-    }
-    isMac() {
-        return PLATFORM_MAC === this.platform;
-    }
-    isLinux() {
-        return PLATFORM_LIN === this.platform;
-    }
-    getPlatformType() {
-        switch (this.platform) {
-            case PLATFORM_WIN: {
-                return 'win';
-            }
-            case PLATFORM_MAC: {
-                return 'mac';
-            }
-            case PLATFORM_LIN: {
-                return 'linux';
-            }
-            default: {
-                core.setFailed(`Unrecognized os ${this.platform}`);
-                throw new Error(`Unrecognized os ${this.platform}`);
-            }
-        }
-    }
 }
-exports.OnecTool = OnecTool;
+exports.PathManager = PathManager;
 
 
 /***/ }),
@@ -62310,10 +62375,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Platform83 = void 0;
 const onecTool_1 = __nccwpck_require__(90499);
 const core = __importStar(__nccwpck_require__(16966));
+const logger_1 = __nccwpck_require__(41666);
 const exec_1 = __nccwpck_require__(92851);
 const onegetjs_1 = __nccwpck_require__(79200);
-const glob = __importStar(__nccwpck_require__(75268));
 const compare_versions_1 = __nccwpck_require__(46508);
+const fileLocator_1 = __nccwpck_require__(49934);
 class Platform83 extends onecTool_1.OnecTool {
     INSTALLED_CACHE_PRIMARY_KEY = 'onec';
     version;
@@ -62342,7 +62408,7 @@ class Platform83 extends onecTool_1.OnecTool {
             architecture: 'x64',
             type: installerType
         }, this.getInstallersPath(), true);
-        core.info(`onec was downloaded`);
+        logger_1.logger.info(`onec was downloaded`);
     }
     async install() {
         const installerPattern = this.isWindows()
@@ -62351,9 +62417,8 @@ class Platform83 extends onecTool_1.OnecTool {
                 ? 'setup-full'
                 : '*.deb';
         const path = this.getInstallersPath();
-        const globber = await glob.create(`${path}/**/${installerPattern}*`);
-        const files = await globber.glob();
-        core.info(`found ${files}`);
+        const files = await (0, fileLocator_1.findFiles)(`${path}/**/${installerPattern}*`);
+        logger_1.logger.info(`found ${files}`);
         if (this.isLinux() && this.useNewInstaller()) {
             await (0, exec_1.exec)('sudo', [
                 files[0],
@@ -62367,12 +62432,12 @@ class Platform83 extends onecTool_1.OnecTool {
         }
         else if (this.isLinux()) {
             for await (const mask of ['common', 'server', 'thin-client', 'client']) {
-                const files = await (await glob.create(`${path}/1c-enterprise83-${mask}_*.deb`)).glob();
+                const files = await (0, fileLocator_1.findFiles)(`${path}/1c-enterprise83-${mask}_*.deb`);
                 if (files.length !== 0) {
                     await (0, exec_1.exec)('sudo', ['dpkg', '-i', '--force-all', `${files[0]}`]);
                 }
                 else {
-                    core.warning(`File not found for ${mask} (mask: 1c-enterprise83-${mask}_*.deb)`);
+                    logger_1.logger.warning(`File not found for ${mask} (mask: 1c-enterprise83-${mask}_*.deb)`);
                 }
             }
         }
@@ -62487,9 +62552,9 @@ exports.unpack = unpack;
 exports.unpackFiles = unpackFiles;
 const tc = __importStar(__nccwpck_require__(95440));
 const exec_1 = __nccwpck_require__(92851);
-const core = __importStar(__nccwpck_require__(16966));
+const logger_1 = __nccwpck_require__(41666);
 async function unpack(file, destination) {
-    core.info(`Unpack ${file} to ${destination}`);
+    logger_1.logger.info(`Unpack ${file} to ${destination}`);
     if (file.endsWith('.zip')) {
         await tc.extractZip(file, destination);
     }
@@ -62557,6 +62622,7 @@ exports.isCacheFeatureAvailable = isCacheFeatureAvailable;
 exports.restoreCacheByPrimaryKey = restoreCacheByPrimaryKey;
 const core = __importStar(__nccwpck_require__(16966));
 const cache = __importStar(__nccwpck_require__(31866));
+const logger_1 = __nccwpck_require__(41666);
 exports.IS_WINDOWS = process.platform === 'win32';
 exports.IS_LINUX = process.platform === 'linux';
 exports.IS_MAC = process.platform === 'darwin';
@@ -62571,21 +62637,21 @@ function isCacheFeatureAvailable() {
         return true;
     }
     if (isGhes()) {
-        core.warning('Caching is only supported on GHES version >= 3.5. If you are on a version >= 3.5, please check with your GHES admin if the Actions cache service is enabled or not.');
+        logger_1.logger.warning('Caching is only supported on GHES version >= 3.5. If you are on a version >= 3.5, please check with your GHES admin if the Actions cache service is enabled or not.');
         return false;
     }
-    core.warning('The runner was not able to contact the cache service. Caching will be skipped');
+    logger_1.logger.warning('The runner was not able to contact the cache service. Caching will be skipped');
     return false;
 }
 async function restoreCacheByPrimaryKey(paths, key) {
     let matchedKey;
     try {
-        core.info(`Trying to restore: ${paths.slice().toString()}`);
+        logger_1.logger.info(`Trying to restore: ${paths.slice().toString()}`);
         matchedKey = await cache.restoreCache(paths.slice(), key, [key]);
     }
     catch (err) {
         const message = err.message;
-        core.info(`[warning]${message}`);
+        logger_1.logger.info(`[warning]${message}`);
         core.setOutput('cache-hit', false);
         return;
     }

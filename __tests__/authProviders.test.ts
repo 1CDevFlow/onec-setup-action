@@ -4,6 +4,7 @@ import {
   AuthProviderFactory,
   AuthProviderType
 } from '../src/onegetjs/auth'
+import { HttpClient } from '../src/onegetjs/httpClient'
 
 describe('Auth Providers', () => {
   const login = process.env.ONEC_USERNAME ?? 'test'
@@ -13,16 +14,12 @@ describe('Auth Providers', () => {
     const provider = new TokenAuthProvider(login, password)
     expect(provider).toBeDefined()
     expect(typeof provider.authenticate).toBe('function')
-    expect(typeof provider.get).toBe('function')
-    expect(typeof provider.getCookies).toBe('function')
   })
 
   it('FormAuthProvider should be instantiable', () => {
     const provider = new FormAuthProvider(login, password)
     expect(provider).toBeDefined()
     expect(typeof provider.authenticate).toBe('function')
-    expect(typeof provider.get).toBe('function')
-    expect(typeof provider.getCookies).toBe('function')
   })
 
   it('AuthProviderFactory should create TOKEN provider', () => {
@@ -67,8 +64,9 @@ describe('Auth Providers', () => {
       }
 
       const provider = new TokenAuthProvider(login, password)
+      const httpClient = new HttpClient()
       try {
-        await provider.authenticate()
+        await provider.authenticate(httpClient)
         // Если дошли сюда - аутентификация прошла
         expect(true).toBe(true)
       } catch (error) {
@@ -82,7 +80,8 @@ describe('Auth Providers', () => {
 
     it('FormAuthProvider should attempt authentication', async () => {
       const provider = new FormAuthProvider(login, password)
-      await provider.authenticate()
+      const httpClient = new HttpClient()
+      await provider.authenticate(httpClient)
       // Если дошли сюда - аутентификация прошла
       expect(true).toBe(true)
     }, 30000)
@@ -98,9 +97,11 @@ describe('Auth Providers', () => {
         password: password
       })
 
-      // Проверяем что провайдер может выполнять запросы
+      const httpClient = new HttpClient()
+      // Проверяем что провайдер может выполнять аутентификацию
       try {
-        const response = await provider.get('https://releases.1c.ru')
+        await provider.authenticate(httpClient)
+        const response = await httpClient.get('https://releases.1c.ru')
         expect(response.status).toBe(200)
       } catch (error) {
         // Ожидаем ошибку из-за отсутствия аутентификации

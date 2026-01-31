@@ -1,6 +1,6 @@
-import * as core from '@actions/core'
 import got, { Got, Response } from 'got'
 import { CookieJar } from 'tough-cookie'
+import { logger } from './logger'
 
 export class HttpClient {
   private client: Got
@@ -21,23 +21,23 @@ export class HttpClient {
       hooks: {
         beforeRequest: [
           options => {
-            core.debug(`Request [${options.method}] ${options.url}`)
+            logger.debug(`Request [${options.method}] ${options.url}`)
           }
         ],
         afterResponse: [
           response => {
-            core.debug(
+            logger.debug(
               `Response [${response.statusCode}] ${response.requestUrl}`
             )
             if (response.redirectUrls.length > 0) {
-              core.debug(`Redirects: ${response.redirectUrls.join(' -> ')}`)
+              logger.debug(`Redirects: ${response.redirectUrls.join(' -> ')}`)
             }
             return response
           }
         ],
         beforeError: [
           error => {
-            core.error(`Request failed: ${error.message}`)
+            logger.error(`Request failed: ${error.message}`)
             return error
           }
         ]

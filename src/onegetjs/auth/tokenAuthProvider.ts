@@ -1,6 +1,6 @@
-import * as core from '@actions/core'
 import { HttpClient } from '../httpClient'
 import { AuthProvider } from './authProvider'
+import { logger } from '../logger'
 
 const LOGIN_URL = 'https://login.1c.ru'
 const TICKET_URL = `${LOGIN_URL}/rest/public/ticket/get`
@@ -28,9 +28,9 @@ export class TokenAuthProvider implements AuthProvider {
         throw new Error('Token authentication failed - still on login page')
       }
 
-      core.debug('Token authentication successful')
+      logger.debug('Token authentication successful')
     } catch (error) {
-      core.error(`Token authentication failed: ${error}`)
+      logger.error(`Token authentication failed: ${error}`)
       throw error
     }
   }
@@ -39,7 +39,7 @@ export class TokenAuthProvider implements AuthProvider {
     httpClient: HttpClient,
     url: string = RELEASES_URL
   ): Promise<string> {
-    core.debug('Authorization')
+    logger.debug('Authorization')
     const body = {
       login: this.username,
       password: this.password,
