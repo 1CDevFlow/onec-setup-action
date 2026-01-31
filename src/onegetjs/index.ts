@@ -73,20 +73,42 @@ export default class OneGet {
 
   async versionInfo(project: string, version: string): Promise<Version> {
     core.debug(`Get project page for: ${project}`)
-    const page = await this.client.projectPage(project)
-    const versions = parser.versions(page)
-    const filteredVersions = versions.filter(v => v.name === version)
+    try {
+      const page = await this.client.projectPage(project)
 
-    if (filteredVersions.length === 0) {
-      error(`Version ${version} for ${project} not found`)
+      const versions = parser.versions(page)
+      core.debug(
+        `Found ${versions.length} versions: ${versions
+          .map(v => v.name)
+          .slice(0, 5)
+          .join(', ')}`
+      )
+
+      const filteredVersions = versions.filter(v => v.name === version)
+
+      if (filteredVersions.length === 0) {
+        // Если версия не найдена, попробуем найти похожие
+        const similarVersions = versions.filter(v =>
+          v.name.includes(version.split('.').slice(0, 2).join('.'))
+        )
+        if (similarVersions.length > 0) {
+          core.warning(
+            `Version ${version} not found, but found similar: ${similarVersions.map(v => v.name).join(', ')}`
+          )
+        }
+        error(`Version ${version} for ${project} not found`)
+      }
+
+      const versionInfo = filteredVersions[0]
+      core.debug(`Version info: ${JSON.stringify(versionInfo)}`)
+
+      versionInfo.files = await this.versionFiles(versionInfo)
+      core.debug(`Version files: ${JSON.stringify(versionInfo.files)}`)
+      return versionInfo
+    } catch (err) {
+      core.error(`Failed to get version info for ${project} ${version}: ${err}`)
+      throw err
     }
-
-    const versionInfo = filteredVersions[0]
-    core.debug(`Version info: ${JSON.stringify(versionInfo)}`)
-
-    versionInfo.files = await this.versionFiles(versionInfo)
-    core.debug(`Version files: ${JSON.stringify(versionInfo.files)}`)
-    return versionInfo
   }
 
   async versionFiles(version: Version): Promise<ReleaseFile[]> {
@@ -105,7 +127,7 @@ export async function downloadRelease(
   const downloadDestination = unpack
     ? path.resolve('tmp', '__downloads__')
     : destination
-
+  
   io.mkdirP(downloadDestination)
   io.mkdirP(destination)
 

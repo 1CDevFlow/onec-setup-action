@@ -3,7 +3,7 @@
   "description": "GitHub Actions TypeScript template",
   "version": "0.0.0",
   "author": "",
-  "private": true,
+  "private": false,
   "homepage": "https://github.com/actions/typescript-action",
   "repository": {
     "type": "git",
@@ -24,7 +24,7 @@
     "node": ">=21"
   },
   "scripts": {
-    "bundle": "npm run format:write && npm run package",
+    "bundle": "pnpm run format:write && npm run package",
     "ci-test": "npx jest",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
     "format:write": "npx prettier --write .",
@@ -32,8 +32,8 @@
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
     "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
     "package:watch": "npm run package -- --watch",
-    "test": "npx jest",
-    "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
+    "test": "npx jest --setupFiles dotenv/config",
+    "all": "pnpm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
   "license": "MIT",
   "jest": {
@@ -67,10 +67,13 @@
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "@actions/exec": "1",
+    "@actions/glob": "0.1",
+    "@actions/io": "1",
     "compare-versions": "^6.1.1",
-    "cookiejar": "^2.1.4",
-    "node-fetch": "^2.7.0",
-    "node-html-parser": "^6.1.13"
+    "got": "11",
+    "node-html-parser": "^6.1.13",
+    "tough-cookie": "4.1.4"
   },
   "devDependencies": {
     "@actions/cache": "^4.0.3",
@@ -79,7 +82,7 @@
     "@types/cookiejar": "^2.1.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.5.4",
-    "@types/node-fetch": "^2.6.11",
+    "@types/tough-cookie": "^4.0.5",
     "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@typescript-eslint/parser": "^8.4.0",
     "@vercel/ncc": "^0.38.1",
