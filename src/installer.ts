@@ -1,6 +1,9 @@
 import * as core from '@actions/core'
 import { isCacheFeatureAvailable } from './utils'
 import * as tools from './tools'
+import { CacheManager } from './tools/cacheManager'
+import { PathManager } from './tools/pathManager'
+import { logger } from './onegetjs/logger'
 
 export async function run(): Promise<void> {
   const type = core.getInput('type')
@@ -18,7 +21,7 @@ export async function run(): Promise<void> {
     }
     installer = new tools.EDT(edt_version, process.platform)
   } else if (type === 'onec') {
-    console.log('Install 1C:Enterprise v.' + onec_version)
+    logger.info('Install 1C:Enterprise v.' + onec_version)
     if (onec_version === undefined) {
       throw new Error('Onec version not specified')
     }
@@ -27,40 +30,61 @@ export async function run(): Promise<void> {
     throw new Error('failed to recognize the installer type')
   }
 
+  const cacheManager = new CacheManager()
+  const pathManager = new PathManager()
+
   let installerRestoredKey: string | undefined
   let installerRestored = false
   let installationRestoredKey: string | undefined
   let installationRestored = false
 
   if (useCache) {
-    installationRestoredKey = await installer.restoreInstalledTool()
+    installationRestoredKey = await cacheManager.restoreInstalled(
+      installer.computeInstalledKey(),
+      installer.cache_
+    )
     installationRestored = installationRestoredKey !== undefined
   }
 
   if (installationRestored) {
+    await pathManager.addExecutablesToPath(
+      installer.cache_[0],
+      installer.getRunFileNames()
+    )
     return
   }
 
   if (useCacheDistr) {
-    installerRestoredKey = await installer.restoreInstallationPackage()
+    installerRestoredKey = await cacheManager.restoreInstaller(
+      installer.computeInstallerKey(),
+      [installer.getInstallersPath()]
+    )
     installerRestored = installerRestoredKey !== undefined
   }
 
   if (!installerRestored) {
     await installer.download()
-    core.info('Installer downloaded')
+    logger.info('Installer downloaded')
     if (useCacheDistr) {
-      await installer.saveInstallerCache()
-      core.info('Installer cached')
+      await cacheManager.saveInstaller(installer.computeInstallerKey(), [
+        installer.getInstallersPath()
+      ])
+      logger.info('Installer cached')
     }
   }
 
   await installer.install()
-  core.info('Installing success')
-  await installer.updatePath()
-  core.info('Env variable `PATH` updated')
+  logger.info('Installing success')
+  await pathManager.addExecutablesToPath(
+    installer.cache_[0],
+    installer.getRunFileNames()
+  )
+  logger.info('Env variable `PATH` updated')
 
   if (useCache) {
-    await installer.saveInstalledCache()
+    await cacheManager.saveInstalled(
+      installer.computeInstalledKey(),
+      installer.cache_
+    )
   }
 }

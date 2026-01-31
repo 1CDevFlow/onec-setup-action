@@ -4,9 +4,10 @@ on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
-      - main
+      - '**'
 
 permissions:
   contents: read
@@ -30,20 +31,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          cache: npm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
       - name: Install Dependencies
         id: install
-        run: npm ci
+        run: pnpm install
 
-      - name: Lint Codebase
-        id: super-linter
-        uses: super-linter/super-linter/slim@v7
-        env:
-          DEFAULT_BRANCH: main
-          FILTER_REGEX_EXCLUDE: dist/**/*
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_ALL_CODEBASE: true
-          VALIDATE_JAVASCRIPT_STANDARD: false
-          VALIDATE_JSCPD: false
-          VALIDATE_TYPESCRIPT_STANDARD: false
+      - name: Lint TypeScript
+        run: pnpm run lint
+
+      - name: Check Format
+        run: pnpm run format:check

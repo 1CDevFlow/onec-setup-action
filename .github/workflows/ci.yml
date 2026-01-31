@@ -4,9 +4,10 @@ on:
   pull_request:
     branches:
       - main
+      - develop
   push:
     branches:
-      - main
+      - '**'
 
 permissions:
   contents: read
@@ -26,19 +27,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          cache: npm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
       - name: Install Dependencies
-        id: npm-ci
-        run: npm ci
+        id: pnpm-install
+        run: pnpm install
 
       - name: Check Format
-        id: npm-format-check
-        run: npm run format:check
+        id: pnpm-format-check
+        run: pnpm run format:check
 
       - name: Test
-        id: npm-ci-test
-        run: npm run ci-test
+        id: pnpm-ci-test
+        run: pnpm run ci-test
 
   test-action:
     name: GitHub Actions Test

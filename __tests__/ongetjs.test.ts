@@ -1,10 +1,8 @@
 import { downloadRelease } from '../src/onegetjs'
-import { config } from 'dotenv'
 
 const TIMEOUT = 500000
 
 describe('onegetjs', () => {
-  config()
   // const client = new OneGet('/tmp/oneget')
   //
   // it('versionInfo', async () => {
@@ -36,9 +34,9 @@ describe('onegetjs', () => {
         {
           project: 'Platform83',
           version: '8.3.10.2580',
-          osName: 'win',
+          osName: 'deb',
           architecture: 'x64',
-          type: 'full'
+          type: 'clientOrServer'
         },
         '/tmp/oneget/test',
         true

@@ -8,6 +8,30 @@ const DOWNLOAD_LINK_SELECTOR = '.downloadDist a'
 export function versions(content: string): Version[] {
   const root = parse(content)
   const cells = root.querySelectorAll(PROJECT_VERSIONS_SELECTOR)
+
+  // Если основной селектор не работает, попробуем альтернативные
+  if (cells.length === 0) {
+    const altSelectors = [
+      'a[href*="ver="]',
+      '.version-link',
+      'td a',
+      '.versionColumn a'
+    ]
+
+    for (const selector of altSelectors) {
+      const altCells = root.querySelectorAll(selector)
+      if (altCells.length > 0) {
+        return altCells.map(
+          cell =>
+            ({
+              name: cell.text.trim(),
+              url: cell.getAttribute('href')
+            }) as Version
+        )
+      }
+    }
+  }
+
   return cells.map(
     cell =>
       ({

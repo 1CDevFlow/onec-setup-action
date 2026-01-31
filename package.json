@@ -24,16 +24,16 @@
     "node": ">=21"
   },
   "scripts": {
-    "bundle": "npm run format:write && npm run package",
+    "bundle": "pnpm run format:write && pnpm run package",
     "ci-test": "npx jest",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
-    "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
+    "lint": "npx eslint .",
     "package": "npx ncc build src/index.ts -o dist --source-map --license licenses.txt",
-    "package:watch": "npm run package -- --watch",
-    "test": "npx jest",
-    "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
+    "package:watch": "pnpm run package -- --watch",
+    "test": "npx jest --setupFiles dotenv/config",
+    "all": "pnpm run format:write && pnpm run lint && pnpm run test && pnpm run coverage && pnpm run package"
   },
   "license": "MIT",
   "jest": {
@@ -67,24 +67,28 @@
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "@actions/exec": "1",
+    "@actions/glob": "0.1",
+    "@actions/io": "1",
     "compare-versions": "^6.1.1",
-    "cookiejar": "^2.1.4",
-    "node-fetch": "^2.7.0",
-    "node-html-parser": "^6.1.13"
+    "got": "11",
+    "node-html-parser": "^6.1.13",
+    "tough-cookie": "4.1.4"
   },
   "devDependencies": {
     "@actions/cache": "^4.0.3",
     "@actions/tool-cache": "^2.0.2",
+    "@eslint/js": "^9.39.2",
     "@jest/globals": "^29.7.0",
     "@types/cookiejar": "^2.1.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.5.4",
-    "@types/node-fetch": "^2.6.11",
-    "@typescript-eslint/eslint-plugin": "^8.4.0",
-    "@typescript-eslint/parser": "^8.4.0",
+    "@types/tough-cookie": "^4.0.5",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "@vercel/ncc": "^0.38.1",
     "dotenv": "^16.4.5",
-    "eslint": "^9.10.0",
+    "eslint": "^9.39.2",
     "eslint-plugin-jest": "^28.8.3",
     "eslint-plugin-jsonc": "^2.16.0",
     "eslint-plugin-prettier": "^5.2.1",

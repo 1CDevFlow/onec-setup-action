@@ -6,12 +6,12 @@ import {
 } from './model'
 import { Client } from './downloader'
 import * as parser from './parse'
-import * as core from '@actions/core'
 import * as filter from './filter'
 import process from 'process'
 import path from 'path'
 import * as io from '@actions/io'
 import { unpackFiles } from '../unpacker'
+import { logger } from './logger'
 
 export default class OneGet {
   client: Client
@@ -36,24 +36,24 @@ export default class OneGet {
     const files = filter.filter(version.files, filters)
 
     if (files.length === 0) {
-      error(`Found't files for version ${JSON.stringify(artifactFilter)}`)
+      this.error(`No files found for version ${JSON.stringify(artifactFilter)}`)
     }
 
-    core.debug(`Files for downloading ${JSON.stringify(files)}`)
+    logger.debug(`Files for downloading ${JSON.stringify(files)}`)
 
     const downloadedFiles: string[] = []
 
     for (const file of files) {
       for (let attempt = 1; attempt <= 2; attempt++) {
-        core.info(`Downloading ${file.name}`)
+        logger.info(`Downloading ${file.name}`)
 
-        core.debug(`Get artifact download page: ${file.name}`)
+        logger.debug(`Get artifact download page: ${file.name}`)
         const links = parser.fileDownloadLinks(
           await this.client.getText(file.url)
         )
 
         if (links.length === 0) {
-          core.error(`Don't found links for file ${file.name}`)
+          logger.error(`Don't found links for file ${file.name}`)
           continue
         }
 
@@ -72,28 +72,57 @@ export default class OneGet {
   }
 
   async versionInfo(project: string, version: string): Promise<Version> {
-    core.debug(`Get project page for: ${project}`)
-    const page = await this.client.projectPage(project)
-    const versions = parser.versions(page)
-    const filteredVersions = versions.filter(v => v.name === version)
+    logger.debug(`Get project page for: ${project}`)
+    try {
+      const page = await this.client.projectPage(project)
 
-    if (filteredVersions.length === 0) {
-      error(`Version ${version} for ${project} not found`)
+      const versions = parser.versions(page)
+      logger.debug(
+        `Found ${versions.length} versions: ${versions
+          .map(v => v.name)
+          .slice(0, 5)
+          .join(', ')}`
+      )
+
+      const filteredVersions = versions.filter(v => v.name === version)
+
+      if (filteredVersions.length === 0) {
+        // Если версия не найдена, попробуем найти похожие
+        const similarVersions = versions.filter(v =>
+          v.name.includes(version.split('.').slice(0, 2).join('.'))
+        )
+        if (similarVersions.length > 0) {
+          logger.error(
+            `Version ${version} not found, but found similar: ${similarVersions.map(v => v.name).join(', ')}`
+          )
+        }
+        this.error(`Version ${version} for ${project} not found`)
+      }
+
+      const versionInfo = filteredVersions[0]
+      logger.debug(`Version info: ${JSON.stringify(versionInfo)}`)
+
+      versionInfo.files = await this.versionFiles(versionInfo)
+      logger.debug(`Version files: ${JSON.stringify(versionInfo.files)}`)
+      return versionInfo
+    } catch (err) {
+      logger.error(
+        `Failed to get version info for ${project} ${version}: ${err}`
+      )
+      throw err
     }
-
-    const versionInfo = filteredVersions[0]
-    core.debug(`Version info: ${JSON.stringify(versionInfo)}`)
-
-    versionInfo.files = await this.versionFiles(versionInfo)
-    core.debug(`Version files: ${JSON.stringify(versionInfo.files)}`)
-    return versionInfo
   }
 
   async versionFiles(version: Version): Promise<ReleaseFile[]> {
-    core.debug(`Get project version page for: ${version.name}`)
+    logger.debug(`Get project version page for: ${version.name}`)
 
     const page = await this.client.getText(version.url)
     return parser.releaseFiles(page)
+  }
+
+  private error(message: string): void {
+    logger.error(message)
+    throw new Error(message)
   }
 }
 
@@ -117,9 +146,4 @@ export async function downloadRelease(
   if (unpack) {
     await unpackFiles(artifacts, destination)
   }
-}
-
-function error(message: string): void {
-  core.error(message)
-  throw message
 }

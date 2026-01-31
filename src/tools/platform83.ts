@@ -1,10 +1,11 @@
 import { OnecTool } from './onecTool'
 import * as core from '@actions/core'
+import { logger } from '../onegetjs/logger'
 import { exec } from '@actions/exec'
 import { downloadRelease } from '../onegetjs'
-import * as glob from '@actions/glob'
 import { compareVersions } from 'compare-versions'
-import { DistributiveType } from 'src/onegetjs/model'
+import { DistributiveType } from '../onegetjs/model'
+import { findFiles } from '../fileLocator'
 
 export class Platform83 extends OnecTool {
   INSTALLED_CACHE_PRIMARY_KEY = 'onec'
@@ -44,7 +45,7 @@ export class Platform83 extends OnecTool {
       true
     )
 
-    core.info(`onec was downloaded`)
+    logger.info(`onec was downloaded`)
   }
 
   async install(): Promise<void> {
@@ -56,9 +57,8 @@ export class Platform83 extends OnecTool {
 
     const path = this.getInstallersPath()
 
-    const globber = await glob.create(`${path}/**/${installerPattern}*`)
-    const files = await globber.glob()
-    core.info(`found ${files}`)
+    const files = await findFiles(`${path}/**/${installerPattern}*`)
+    logger.info(`found ${files}`)
 
     if (this.isLinux() && this.useNewInstaller()) {
       await exec('sudo', [
@@ -72,14 +72,12 @@ export class Platform83 extends OnecTool {
       ])
     } else if (this.isLinux()) {
       for await (const mask of ['common', 'server', 'thin-client', 'client']) {
-        const files = await (
-          await glob.create(`${path}/1c-enterprise83-${mask}_*.deb`)
-        ).glob()
+        const files = await findFiles(`${path}/1c-enterprise83-${mask}_*.deb`)
 
         if (files.length !== 0) {
           await exec('sudo', ['dpkg', '-i', '--force-all', `${files[0]}`])
         } else {
-          core.warning(
+          logger.warning(
             `File not found for ${mask} (mask: 1c-enterprise83-${mask}_*.deb)`
           )
         }
