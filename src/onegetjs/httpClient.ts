@@ -96,7 +96,7 @@ export class HttpClient {
         throwHttpErrors: false
       })
       return {
-        data: isJson ? response.body : response.body,
+        data: response.body,
         request: { res: { responseUrl: response.url } },
         status: response.statusCode,
         headers: response.headers

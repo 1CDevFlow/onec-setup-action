@@ -127,7 +127,7 @@ export async function downloadRelease(
   const downloadDestination = unpack
     ? path.resolve('tmp', '__downloads__')
     : destination
-  
+
   io.mkdirP(downloadDestination)
   io.mkdirP(destination)
 

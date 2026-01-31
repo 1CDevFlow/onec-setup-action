@@ -1,10 +1,7 @@
+import { HttpClient } from '../httpClient'
+
 export interface AuthProvider {
-  authenticate(): Promise<void>
-  get(
-    url: string,
-    options?: any
-  ): Promise<{ data: any; request: any; status: number; headers?: any }>
-  getCookies(): string
+  authenticate(httpClient: HttpClient): Promise<void>
 }
 
 export enum AuthProviderType {

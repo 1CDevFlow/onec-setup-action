@@ -1,12 +1,6 @@
-import { AuthProvider, AuthProviderType } from './authProvider'
+import { AuthProvider, AuthProviderType, AuthConfig } from './authProvider'
 import { TokenAuthProvider } from './tokenAuthProvider'
 import { FormAuthProvider } from './formAuthProvider'
-
-export interface AuthConfig {
-  username: string
-  password: string
-  preferredProvider?: AuthProviderType
-}
 
 export class AuthProviderFactory {
   static create(config: AuthConfig): AuthProvider {

@@ -8,9 +8,7 @@ const RELEASES_URL = 'https://releases.1c.ru'
 const PROJECTS_URL = '/project/'
 
 export class Client {
-  login: string
-  password: string
-  httpClient: HttpClient
+  private httpClient: HttpClient
   private authProvider: AuthProvider
 
   constructor(
@@ -23,11 +21,8 @@ export class Client {
       core.setFailed(err)
       throw err
     }
-    this.login = login
-    this.password = password
-    this.httpClient = new HttpClient()
 
-    // Создаем провайдер через фабрику
+    this.httpClient = new HttpClient()
     this.authProvider = AuthProviderFactory.create({
       username: login,
       password: password,
@@ -36,23 +31,17 @@ export class Client {
   }
 
   async auth(): Promise<void> {
-    await this.authProvider.authenticate()
+    await this.authProvider.authenticate(this.httpClient)
   }
 
   async getText(url: string): Promise<string> {
     const fullURL = new URL(url, RELEASES_URL)
-    const response = await this.get(fullURL.toString())
+    const response = await this.httpClient.get(fullURL.toString())
     return response.data
   }
 
   async get(url: string): Promise<any> {
-    return this.authProvider.get(url)
-  }
-
-  checkResponseError(response: any): void {
-    if (response.status >= 400) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
+    return this.httpClient.get(url)
   }
 
   extractFileName(url: string, headers?: any): string | undefined {
@@ -76,13 +65,16 @@ export class Client {
   async downloadFile(url: string, output: string): Promise<string | undefined> {
     core.info(`Download ${url} to ${output}`)
 
-    // First request to get headers and filename
-    const headResponse = await this.get(url)
-    const fileName = this.extractFileName(url, headResponse.headers)
+    const streamResponse = await this.httpClient.get(url, {
+      responseType: 'stream',
+      isStream: true
+    })
 
+    const fileName = this.extractFileName(url, streamResponse.headers)
     if (!fileName) {
       return undefined
     }
+
     const fullFileName = path.resolve(output, fileName)
 
     try {
@@ -94,11 +86,6 @@ export class Client {
       /* empty */
     }
 
-    // Second request to download the file as stream
-    const streamResponse = await this.authProvider.get(url, {
-      responseType: 'stream',
-      isStream: true
-    })
     const destination = fs.createWriteStream(fullFileName, { flags: 'wx' })
 
     await new Promise((resolve, reject) => {
