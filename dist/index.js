@@ -61329,6 +61329,9 @@ class TokenAuthProvider {
         const data = typeof response.data === 'string'
             ? JSON.parse(response.data)
             : response.data;
+        if (!data.ticket) {
+            throw new Error('No ticket received in authentication response');
+        }
         return `${LOGIN_URL}/ticket/auth?token=${data.ticket}`;
     }
 }
@@ -61624,8 +61627,8 @@ class HttpClient {
         };
     }
     async post(url, data, config = {}) {
-        const isJson = typeof data === 'object' &&
-            config.headers?.['Content-Type'] === 'application/json';
+        const contentType = (config.headers?.['Content-Type'] || '').toLowerCase();
+        const isJson = typeof data === 'object' && contentType.startsWith('application/json');
         try {
             const response = await this.client.post(url, {
                 body: isJson ? undefined : data,
@@ -61736,7 +61739,7 @@ class OneGet {
         const filters = filter.getFilters(artifactFilter);
         const files = filter.filter(version.files, filters);
         if (files.length === 0) {
-            this.error(`Found't files for version ${JSON.stringify(artifactFilter)}`);
+            this.error(`No files found for version ${JSON.stringify(artifactFilter)}`);
         }
         logger_1.logger.debug(`Files for downloading ${JSON.stringify(files)}`);
         const downloadedFiles = [];
@@ -61797,7 +61800,7 @@ class OneGet {
     }
     error(message) {
         logger_1.logger.error(message);
-        throw message;
+        throw new Error(message);
     }
 }
 exports["default"] = OneGet;

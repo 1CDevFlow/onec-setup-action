@@ -36,7 +36,7 @@ export default class OneGet {
     const files = filter.filter(version.files, filters)
 
     if (files.length === 0) {
-      this.error(`Found't files for version ${JSON.stringify(artifactFilter)}`)
+      this.error(`No files found for version ${JSON.stringify(artifactFilter)}`)
     }
 
     logger.debug(`Files for downloading ${JSON.stringify(files)}`)
@@ -122,7 +122,7 @@ export default class OneGet {
 
   private error(message: string): void {
     logger.error(message)
-    throw message
+    throw new Error(message)
   }
 }
 

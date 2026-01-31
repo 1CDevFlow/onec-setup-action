@@ -60,6 +60,11 @@ export class TokenAuthProvider implements AuthProvider {
       typeof response.data === 'string'
         ? JSON.parse(response.data)
         : response.data
+
+    if (!data.ticket) {
+      throw new Error('No ticket received in authentication response')
+    }
+
     return `${LOGIN_URL}/ticket/auth?token=${data.ticket}`
   }
 }

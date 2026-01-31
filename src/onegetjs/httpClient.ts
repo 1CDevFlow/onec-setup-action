@@ -81,9 +81,9 @@ export class HttpClient {
     data: any,
     config: any = {}
   ): Promise<{ data: any; request: any; status: number; headers?: any }> {
+    const contentType = (config.headers?.['Content-Type'] || '').toLowerCase()
     const isJson =
-      typeof data === 'object' &&
-      config.headers?.['Content-Type'] === 'application/json'
+      typeof data === 'object' && contentType.startsWith('application/json')
 
     try {
       const response = await this.client.post(url, {
