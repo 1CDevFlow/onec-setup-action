@@ -30,6 +30,12 @@ inputs:
     required: false
     description: 'use cache distributives'
     default: 'false'
+  download_timeout:
+    required: false
+    description:
+      'distributive download timeout, seconds (large offline distributions of
+      EDT ~1.5GB)'
+    default: '1800'
 runs:
   using: node20
   main: dist/index.js

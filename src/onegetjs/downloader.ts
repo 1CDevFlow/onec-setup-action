@@ -14,7 +14,10 @@ export class Client {
   constructor(
     login: string,
     password: string,
-    config?: { preferredProvider?: AuthProviderType }
+    config?: {
+      preferredProvider?: AuthProviderType
+      downloadTimeout?: number
+    }
   ) {
     if (!login || !password) {
       const err = new Error('Do not set login or/and password')
@@ -22,7 +25,7 @@ export class Client {
       throw err
     }
 
-    this.httpClient = new HttpClient()
+    this.httpClient = new HttpClient(config?.downloadTimeout)
     this.authProvider = AuthProviderFactory.create({
       username: login,
       password: password,

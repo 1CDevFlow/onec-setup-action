@@ -17,10 +17,10 @@ export default class OneGet {
   client: Client
   downloadTo: string
 
-  constructor(downloadTo: string) {
+  constructor(downloadTo: string, config?: { downloadTimeout?: number }) {
     const login = process.env.ONEC_USERNAME ?? ''
     const password = process.env.ONEC_PASSWORD ?? ''
-    this.client = new Client(login, password)
+    this.client = new Client(login, password, config)
     this.downloadTo = downloadTo
   }
 
@@ -129,7 +129,8 @@ export default class OneGet {
 export async function downloadRelease(
   release: ReleaseDescription,
   destination: string,
-  unpack = false
+  unpack = false,
+  downloadTimeout?: number
 ): Promise<void> {
   const downloadDestination = unpack
     ? path.resolve('tmp', '__downloads__')
@@ -138,7 +139,7 @@ export async function downloadRelease(
   io.mkdirP(downloadDestination)
   io.mkdirP(destination)
 
-  const oneGet = new OneGet(downloadDestination)
+  const oneGet = new OneGet(downloadDestination, { downloadTimeout })
   await oneGet.auth()
   const version = await oneGet.versionInfo(release.project, release.version)
   const artifacts = await oneGet.download(version, release)

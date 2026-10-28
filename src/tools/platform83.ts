@@ -12,11 +12,13 @@ export class Platform83 extends OnecTool {
   version: string
   cache_: string[]
   platform: string
-  constructor(version: string, platform: string) {
+  downloadTimeout?: number
+  constructor(version: string, platform: string, downloadTimeout?: number) {
     super()
     this.version = version
     this.platform = platform
     this.cache_ = this.getCacheDirs()
+    this.downloadTimeout = downloadTimeout
   }
 
   useNewInstaller(): boolean {
@@ -42,7 +44,8 @@ export class Platform83 extends OnecTool {
         type: installerType
       },
       this.getInstallersPath(),
-      true
+      true,
+      this.downloadTimeout
     )
 
     logger.info(`onec was downloaded`)
