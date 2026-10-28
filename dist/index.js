@@ -61086,6 +61086,7 @@ async function run() {
     const type = core.getInput('type');
     const edt_version = core.getInput('edt_version');
     const onec_version = core.getInput('onec_version');
+    const downloadTimeout = parseInt(core.getInput('download_timeout') || '1800', 10);
     const useCache = core.getBooleanInput('cache') && (0, utils_1.isCacheFeatureAvailable)();
     const useCacheDistr = core.getBooleanInput('cache_distr') && (0, utils_1.isCacheFeatureAvailable)();
     let installer;
@@ -61093,14 +61094,14 @@ async function run() {
         if (edt_version === undefined) {
             throw new Error('EDT version not specified');
         }
-        installer = new tools.EDT(edt_version, process.platform);
+        installer = new tools.EDT(edt_version, process.platform, downloadTimeout);
     }
     else if (type === 'onec') {
         logger_1.logger.info('Install 1C:Enterprise v.' + onec_version);
         if (onec_version === undefined) {
             throw new Error('Onec version not specified');
         }
-        installer = new tools.Platform83(onec_version, process.platform);
+        installer = new tools.Platform83(onec_version, process.platform, downloadTimeout);
     }
     else {
         throw new Error('failed to recognize the installer type');
@@ -61396,7 +61397,7 @@ class Client {
             logger_1.logger.error(err.message);
             throw err;
         }
-        this.httpClient = new httpClient_1.HttpClient();
+        this.httpClient = new httpClient_1.HttpClient(config?.downloadTimeout);
         this.authProvider = auth_1.AuthProviderFactory.create({
             username: login,
             password: password,
@@ -61566,8 +61567,11 @@ const logger_1 = __nccwpck_require__(41666);
 class HttpClient {
     client;
     jar;
-    constructor() {
+    streamRequestTimeout;
+    constructor(downloadTimeout) {
         this.jar = new tough_cookie_1.CookieJar();
+        this.streamRequestTimeout =
+            (downloadTimeout && downloadTimeout > 0 ? downloadTimeout : 1800) * 1000;
         this.client = got_1.default.extend({
             timeout: { request: 30000 },
             followRedirect: true,
@@ -61604,7 +61608,7 @@ class HttpClient {
         if (options?.isStream) {
             // For streams, return the stream directly with extended timeout
             const stream = this.client.stream.get(url, {
-                timeout: { request: 300000 } // 5 minutes for large files
+                timeout: { request: this.streamRequestTimeout }
             });
             return new Promise((resolve, reject) => {
                 stream.on('response', (response) => {
@@ -61726,10 +61730,10 @@ const logger_1 = __nccwpck_require__(41666);
 class OneGet {
     client;
     downloadTo;
-    constructor(downloadTo) {
+    constructor(downloadTo, config) {
         const login = process_1.default.env.ONEC_USERNAME ?? '';
         const password = process_1.default.env.ONEC_PASSWORD ?? '';
-        this.client = new downloader_1.Client(login, password);
+        this.client = new downloader_1.Client(login, password, config);
         this.downloadTo = downloadTo;
     }
     async auth() {
@@ -61804,13 +61808,13 @@ class OneGet {
     }
 }
 exports["default"] = OneGet;
-async function downloadRelease(release, destination, unpack = false) {
+async function downloadRelease(release, destination, unpack = false, downloadTimeout) {
     const downloadDestination = unpack
         ? path_1.default.resolve('tmp', '__downloads__')
         : destination;
     io.mkdirP(downloadDestination);
     io.mkdirP(destination);
-    const oneGet = new OneGet(downloadDestination);
+    const oneGet = new OneGet(downloadDestination, { downloadTimeout });
     await oneGet.auth();
     const version = await oneGet.versionInfo(release.project, release.version);
     const artifacts = await oneGet.download(version, release);
@@ -62149,11 +62153,13 @@ class EDT extends onecTool_1.OnecTool {
     version;
     cache_;
     platform;
-    constructor(version, platform) {
+    downloadTimeout;
+    constructor(version, platform, downloadTimeout) {
         super();
         this.version = version;
         this.platform = platform;
         this.cache_ = this.getCacheDirs();
+        this.downloadTimeout = downloadTimeout;
     }
     async download() {
         const onegetPlatform = this.getPlatformType();
@@ -62162,7 +62168,7 @@ class EDT extends onecTool_1.OnecTool {
             version: this.version,
             osName: onegetPlatform,
             offline: true
-        }, `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`, true);
+        }, `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`, true, this.downloadTimeout);
     }
     async install() {
         let installerPattern;
@@ -62415,11 +62421,13 @@ class Platform83 extends onecTool_1.OnecTool {
     version;
     cache_;
     platform;
-    constructor(version, platform) {
+    downloadTimeout;
+    constructor(version, platform, downloadTimeout) {
         super();
         this.version = version;
         this.platform = platform;
         this.cache_ = this.getCacheDirs();
+        this.downloadTimeout = downloadTimeout;
     }
     useNewInstaller() {
         return (0, compare_versions_1.compareVersions)(this.version, '8.3.20') >= 0;
@@ -62437,7 +62445,7 @@ class Platform83 extends onecTool_1.OnecTool {
             osName: platformType,
             architecture: 'x64',
             type: installerType
-        }, this.getInstallersPath(), true);
+        }, this.getInstallersPath(), true, this.downloadTimeout);
         logger_1.logger.info(`onec was downloaded`);
     }
     async install() {

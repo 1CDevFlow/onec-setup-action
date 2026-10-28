@@ -11,11 +11,13 @@ export class EDT extends OnecTool {
   version: string
   cache_: string[]
   platform: string
-  constructor(version: string, platform: string) {
+  downloadTimeout?: number
+  constructor(version: string, platform: string, downloadTimeout?: number) {
     super()
     this.version = version
     this.platform = platform
     this.cache_ = this.getCacheDirs()
+    this.downloadTimeout = downloadTimeout
   }
   async download(): Promise<void> {
     const onegetPlatform = this.getPlatformType()
@@ -28,7 +30,8 @@ export class EDT extends OnecTool {
         offline: true
       },
       `/tmp/${this.INSTALLER_CACHE_PRIMARY_KEY}`,
-      true
+      true,
+      this.downloadTimeout
     )
   }
 

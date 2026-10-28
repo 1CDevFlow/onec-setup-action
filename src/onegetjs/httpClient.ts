@@ -5,9 +5,12 @@ import { logger } from './logger'
 export class HttpClient {
   private client: Got
   private jar: CookieJar
+  private streamRequestTimeout: number
 
-  constructor() {
+  constructor(downloadTimeout?: number) {
     this.jar = new CookieJar()
+    this.streamRequestTimeout =
+      (downloadTimeout && downloadTimeout > 0 ? downloadTimeout : 1800) * 1000
 
     this.client = got.extend({
       timeout: { request: 30000 },
@@ -52,7 +55,7 @@ export class HttpClient {
     if (options?.isStream) {
       // For streams, return the stream directly with extended timeout
       const stream = this.client.stream.get(url, {
-        timeout: { request: 300000 } // 5 minutes for large files
+        timeout: { request: this.streamRequestTimeout }
       })
       return new Promise((resolve, reject) => {
         stream.on('response', (response: Response) => {

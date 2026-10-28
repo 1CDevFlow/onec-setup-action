@@ -9,6 +9,10 @@ export async function run(): Promise<void> {
   const type = core.getInput('type')
   const edt_version = core.getInput('edt_version')
   const onec_version = core.getInput('onec_version')
+  const downloadTimeout = parseInt(
+    core.getInput('download_timeout') || '1800',
+    10
+  )
 
   const useCache = core.getBooleanInput('cache') && isCacheFeatureAvailable()
   const useCacheDistr =
@@ -19,13 +23,17 @@ export async function run(): Promise<void> {
     if (edt_version === undefined) {
       throw new Error('EDT version not specified')
     }
-    installer = new tools.EDT(edt_version, process.platform)
+    installer = new tools.EDT(edt_version, process.platform, downloadTimeout)
   } else if (type === 'onec') {
     logger.info('Install 1C:Enterprise v.' + onec_version)
     if (onec_version === undefined) {
       throw new Error('Onec version not specified')
     }
-    installer = new tools.Platform83(onec_version, process.platform)
+    installer = new tools.Platform83(
+      onec_version,
+      process.platform,
+      downloadTimeout
+    )
   } else {
     throw new Error('failed to recognize the installer type')
   }
