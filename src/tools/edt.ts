@@ -76,7 +76,9 @@ export class EDT extends OnecTool {
     if (this.isWindows()) {
       return ['C:/Program Files/1C', 'C:/ProgramData/1C/1CE/ring-commands.cfg']
     } else if (this.isLinux()) {
-      return ['/opt/1C', '/etc/1C/1CE/ring-commands.cfg']
+      //ring-commands.cfg — файл, пути кэша должны быть каталогами:
+      //actions/cache распаковывает архив в указанные пути от имени раннера
+      return ['/opt/1C', '/etc/1C/1CE']
     } else if (this.isMac()) {
       return ['/Applications/1C']
     } else {
