@@ -62025,6 +62025,8 @@ exports.CacheManager = void 0;
 const core = __importStar(__nccwpck_require__(16966));
 const logger_1 = __nccwpck_require__(41666);
 const cache = __importStar(__nccwpck_require__(31866));
+const exec_1 = __nccwpck_require__(92851);
+const platform_1 = __nccwpck_require__(69579);
 const utils_1 = __nccwpck_require__(66087);
 class CacheManager {
     async restoreInstaller(key, paths) {
@@ -62033,6 +62035,7 @@ class CacheManager {
         return matchedKey;
     }
     async restoreInstalled(key, paths) {
+        await this.prepareCachePaths(paths);
         const matchedKey = await (0, utils_1.restoreCacheByPrimaryKey)(paths, key);
         this.logCacheResult(matchedKey, key);
         return matchedKey;
@@ -62054,6 +62057,29 @@ class CacheManager {
         catch (error) {
             if (error instanceof Error)
                 logger_1.logger.info(error.message);
+        }
+    }
+    /**
+     * Подготавливает каталоги кэша к распаковке архива actions/cache.
+     *
+     * Установленные продукты 1С лежат в системных каталогах (/opt/1C, /etc/1C/...),
+     * которые недоступны на запись пользователю раннера. actions/cache распаковывает
+     * архив tar от имени раннера без sudo, поэтому без подготовки путей restore
+     * всегда падает с `Cannot mkdir: Permission denied` и кэш фактически не работает.
+     *
+     * Для каждого пути: создаёт каталог и передаёт владение пользователю раннера.
+     * Только Linux; на Windows/macOS распаковка в системные каталоги и так проходит
+     * от имени процесса раннера.
+     */
+    async prepareCachePaths(paths) {
+        if (!(0, platform_1.isLinux)()) {
+            return;
+        }
+        const user = process.env['USER'] || 'runner';
+        for (const dir of paths) {
+            logger_1.logger.info(`Preparing cache path ${dir}`);
+            await (0, exec_1.exec)('sudo', ['mkdir', '-p', dir]);
+            await (0, exec_1.exec)('sudo', ['chown', '-R', `${user}:`, dir]);
         }
     }
     logCacheResult(matchedKey, primaryKey) {
@@ -62180,7 +62206,9 @@ class EDT extends onecTool_1.OnecTool {
             return ['C:/Program Files/1C', 'C:/ProgramData/1C/1CE/ring-commands.cfg'];
         }
         else if (this.isLinux()) {
-            return ['/opt/1C', '/etc/1C/1CE/ring-commands.cfg'];
+            //ring-commands.cfg — файл, пути кэша должны быть каталогами:
+            //actions/cache распаковывает архив в указанные пути от имени раннера
+            return ['/opt/1C', '/etc/1C/1CE'];
         }
         else if (this.isMac()) {
             return ['/Applications/1C'];
