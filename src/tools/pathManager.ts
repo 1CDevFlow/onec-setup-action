@@ -15,7 +15,6 @@ export class PathManager {
       if (file) {
         logger.info(`add to PATH ${path.dirname(file)} (${file})`)
         core.addPath(path.dirname(file))
-        break
       }
     }
   }

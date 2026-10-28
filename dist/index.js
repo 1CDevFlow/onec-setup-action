@@ -62326,7 +62326,6 @@ class PathManager {
             if (file) {
                 logger_1.logger.info(`add to PATH ${path_1.default.dirname(file)} (${file})`);
                 core.addPath(path_1.default.dirname(file));
-                break;
             }
         }
     }
